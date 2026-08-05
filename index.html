@@ -1,0 +1,2726 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>برنامه هفتگی سامان</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12181f; --surface:#1b232c; --surface-2:#222b35;
+    --text:#e8ecef; --muted:#8b98a5; --line:rgba(255,255,255,0.08);
+    --morning:#f2a65a; --evening:#c968a3; --night:#5b7fd4; --off:#5fb489; --mn:#7d6fd4;
+    --me:#e08a72; --morakhasi:#45b8ac;
+    --danger:#e0665f; --good:#5fb489; --event:#e0b34d;
+    --c-kar:#f2a65a; --c-mali:#e2c14d; --c-class:#7dd3c0; --c-zendegi:#8ea4c7;
+    --c-dd:#c968a3; --c-esterahat:#6b7885; --c-khab:#5b7fd4; --c-sayer:#9a9a9a;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Vazirmatn',sans-serif;margin:0;padding:20px 12px 90px;line-height:1.6;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:23px;font-weight:800;margin:0 0 2px;letter-spacing:-0.02em;}
+  .sub{color:var(--muted);font-size:12.5px;font-family:'JetBrains Mono',monospace;}
+
+  .weekbar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:13px 14px;margin:18px 0 18px;
+  }
+  .weekbar button.navbtn{background:var(--surface-2);border:1px solid var(--line);color:var(--text);width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:16px;flex-shrink:0;}
+  .weekbar button.navbtn:hover{border-color:var(--morning);color:var(--morning);}
+  .weekrange{font-weight:700;font-size:15px;flex:1 1 160px;min-width:150px;}
+  .weekrange .g{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .weekbar input[type=date]{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 8px;font-family:'Vazirmatn',sans-serif;font-size:12px;}
+  .savebtn{background:var(--morning);color:#1a1206;border:none;border-radius:10px;padding:9px 14px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:'Vazirmatn',sans-serif;white-space:nowrap;}
+  .savebtn:hover{filter:brightness(1.08);}
+  .savestatus{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .savestatus.dirty{color:var(--evening);}
+  .savestatus.saved{color:var(--good);}
+
+  .legend{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);background:var(--surface);padding:5px 9px;border-radius:20px;border:1px solid var(--line);}
+  .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+  .day{background:var(--surface);border-radius:16px;border:1px solid var(--line);margin-bottom:14px;overflow:hidden;border-inline-start:4px solid var(--line);}
+  .day[data-type=morning]{border-inline-start-color:var(--morning);}
+  .day[data-type=evening]{border-inline-start-color:var(--evening);}
+  .day[data-type=night]{border-inline-start-color:var(--night);}
+  .day[data-type=off]{border-inline-start-color:var(--off);}
+  .day[data-type=mn]{border-inline-start-color:var(--mn);}
+  .day[data-type=me]{border-inline-start-color:var(--me);}
+  .day[data-type=morakhasi]{border-inline-start-color:var(--morakhasi);}
+
+  .day-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px 10px;gap:8px;flex-wrap:wrap;}
+  .day-title{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .day-title .name{font-weight:700;font-size:15.5px;}
+  .day-title .jdate{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+  .day-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .daytotal{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);}
+  select.shiftsel{background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:12px;font-family:'Vazirmatn',sans-serif;cursor:pointer;}
+
+  /* row card — flexible, stacks on mobile */
+  .rowcard{border-top:1px solid var(--line);padding:11px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;}
+  .timegroup{display:flex;align-items:center;gap:5px;flex:1 1 220px;}
+  .timegroup input[type=time]{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:4px 6px;font-family:'JetBrains Mono',monospace;font-size:12px;width:86px;}
+  .timegroup .dash{color:var(--muted);font-size:11px;}
+  .timegroup .durlabel{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);white-space:nowrap;margin-inline-start:2px;}
+  .activity-field{flex:2 1 180px;min-width:140px;}
+  .activity-field [contenteditable]{outline:none;border-radius:6px;padding:3px 5px;font-size:13.5px;}
+  .activity-field [contenteditable]:focus{background:rgba(255,255,255,0.06);}
+  .metagroup{display:flex;align-items:center;gap:10px;flex:1 1 220px;flex-wrap:wrap;}
+  select.catsel{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:4px 6px;font-size:11.5px;font-family:'Vazirmatn',sans-serif;}
+  .donewrap{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;color:var(--muted);}
+  .donewrap input{width:16px;height:16px;accent-color:var(--good);cursor:pointer;}
+  .actiongroup{display:flex;gap:2px;margin-inline-start:auto;}
+  .actiongroup button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:5px;}
+  .actiongroup button:hover{color:var(--text);background:rgba(255,255,255,0.08);}
+  .actiongroup button.del:hover{color:var(--danger);background:rgba(224,102,95,0.12);}
+  .rowcard.done{opacity:0.55;}
+  .rowcard.done .activity-field{text-decoration:line-through;}
+
+  @media (max-width:520px){
+    .rowcard > *{flex-basis:100% !important;}
+    .actiongroup{justify-content:flex-end;margin-inline-start:0;}
+  }
+
+  .add-row{display:block;width:100%;text-align:center;background:none;border:none;color:var(--muted);font-family:'Vazirmatn',sans-serif;font-size:12px;padding:10px;cursor:pointer;border-top:1px dashed var(--line);}
+  .add-row:hover{color:var(--morning);}
+  .empty-day{padding:18px 14px;color:var(--muted);font-size:12.5px;text-align:center;}
+
+  .report{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 14px;margin-top:22px;}
+  .report h2{font-size:15.5px;margin:0 0 4px;}
+  .report .desc{color:var(--muted);font-size:11.5px;margin-bottom:16px;}
+  .chart{display:flex;align-items:flex-end;gap:10px;padding:0 4px 4px;overflow-x:auto;overflow-y:visible;}
+  .bar-col{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:56px;flex-shrink:0;}
+  .bar-stack{position:relative;width:52px;height:165px;display:flex;align-items:flex-end;justify-content:center;}
+  .bar{width:52px;border-radius:7px 7px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;box-sizing:border-box;overflow:hidden;}
+  .bar.zero{background:var(--surface-2) !important;border:1px dashed var(--line);}
+  .bar-val{color:#12181f;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;white-space:nowrap;letter-spacing:-0.02em;}
+  .bar.zero .bar-val{color:var(--muted);}
+  .bar-label{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.3;max-width:60px;}
+  .report-empty{color:var(--muted);font-size:12.5px;text-align:center;padding:18px 0;}
+
+  .hint{text-align:center;color:var(--muted);font-size:11px;margin-top:22px;font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- view toggle bar ---------- */
+  .viewbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .viewswitch{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;}
+  .viewswitch button{background:none;border:none;color:var(--muted);font-family:'Vazirmatn',sans-serif;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:9px;cursor:pointer;}
+  .viewswitch button.active{background:var(--morning);color:#1a1206;}
+  .tmplbtn{margin-inline-start:auto;background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 13px;font-size:12.5px;font-family:'Vazirmatn',sans-serif;cursor:pointer;}
+  .tmplbtn:hover{border-color:var(--morning);color:var(--morning);}
+  .todaybtn{background:var(--morning);border:1px solid var(--morning);color:#1a1206;border-radius:10px;padding:8px 13px;font-size:12.5px;font-weight:700;font-family:'Vazirmatn',sans-serif;cursor:pointer;}
+  .todaybtn:hover{filter:brightness(1.08);}
+
+  /* ---------- day nav (daily view) ---------- */
+  .daynav{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:14px;}
+  .daynav button.navbtn{background:var(--surface-2);border:1px solid var(--line);color:var(--text);width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:15px;flex-shrink:0;}
+  .daynav button.navbtn:hover{border-color:var(--morning);color:var(--morning);}
+  .daynav .daynavlabel{flex:1;text-align:center;font-weight:700;font-size:14px;}
+  .hidden{display:none !important;}
+
+  /* ---------- sayer note field ---------- */
+  .notewrap{flex:1 1 100%;display:none;margin-top:4px;}
+  .notewrap input{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:6px 9px;font-size:12px;font-family:'Vazirmatn',sans-serif;}
+  .notewrap input::placeholder{color:var(--muted);}
+
+  /* ---------- template editor modal ---------- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.62);display:flex;align-items:center;justify-content:center;z-index:60;padding:14px;}
+  .modal-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+  .modal-head h2{font-size:16px;margin:0;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;}
+  .modal-close:hover{color:var(--text);}
+  .modal-desc{color:var(--muted);font-size:11.5px;margin-bottom:14px;}
+  .tmpltabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  button.tmpltab{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:20px;padding:6px 13px;font-size:12px;font-family:'Vazirmatn',sans-serif;cursor:pointer;}
+  button.tmpltab.active{background:var(--morning);color:#1a1206;border-color:var(--morning);font-weight:700;}
+  .tmplrowcard{border-top:1px solid var(--line);padding:11px 2px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;}
+  .tmplrowcard:first-child{border-top:none;}
+  .tmplrowcard input[type=time]{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:5px 7px;font-family:'JetBrains Mono',monospace;font-size:12px;width:84px;}
+  .tmplrowcard .activity-field input{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:5px 8px;font-size:13px;font-family:'Vazirmatn',sans-serif;}
+  .tmpl-addrow{display:block;width:100%;text-align:center;background:none;border:1px dashed var(--line);color:var(--muted);font-family:'Vazirmatn',sans-serif;font-size:12px;padding:9px;cursor:pointer;border-radius:10px;margin-top:10px;}
+  .tmpl-addrow:hover{color:var(--morning);border-color:var(--morning);}
+  .modal-actions{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+  .tmplstatus{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- "how long?" duration picker ---------- */
+  .durpicker{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 12px;}
+  .durpicker button{width:44px;height:44px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);color:var(--text);font-size:22px;line-height:1;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .durpicker button:hover:not(:disabled){border-color:var(--morning);color:var(--morning);}
+  .durpicker button:disabled{opacity:0.3;cursor:default;}
+  .durvalue{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;letter-spacing:0.02em;min-width:118px;text-align:center;direction:ltr;}
+  .durvalue small{display:block;direction:rtl;font-family:'Vazirmatn',sans-serif;font-size:11px;font-weight:400;color:var(--muted);margin-top:3px;letter-spacing:0;}
+  .durchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;}
+  .durchips button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:20px;padding:5px 12px;font-size:12px;font-family:'Vazirmatn',sans-serif;cursor:pointer;}
+  .durchips button:hover{border-color:var(--morning);color:var(--morning);}
+  .durchips button.active{background:var(--morning);color:#1a1206;border-color:var(--morning);font-weight:700;}
+  .durinfo{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:11.5px;line-height:1.9;color:var(--muted);}
+  .durinfo b{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;}
+  .durshift{display:flex;align-items:flex-start;gap:7px;margin-top:11px;font-size:12px;line-height:1.7;cursor:pointer;}
+  .durshift input{width:16px;height:16px;accent-color:var(--morning);cursor:pointer;flex-shrink:0;margin-top:2px;}
+
+  /* ---------- category editor rows ---------- */
+  .catrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border-top:1px solid var(--line);padding:10px 2px;}
+  .catrow:first-child{border-top:none;}
+  .catrow input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);cursor:pointer;flex-shrink:0;}
+  .catrow input[type=text]{flex:1 1 150px;min-width:120px;background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:6px 9px;font-size:13px;font-family:'Vazirmatn',sans-serif;}
+  .catrow label{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted);white-space:nowrap;cursor:pointer;}
+  .catrow label input{width:15px;height:15px;accent-color:var(--morning);cursor:pointer;}
+  .catrow .actiongroup{margin-inline-start:auto;}
+  .cathint{font-size:10.5px;color:var(--muted);flex:1 1 100%;line-height:1.7;}
+
+  /* ---------- single-category time report ---------- */
+  .catreport-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;}
+  .catreport-bar select{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 12px;font-size:13px;font-family:'Vazirmatn',sans-serif;cursor:pointer;flex:1 1 170px;}
+  .creport{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .creport th{color:var(--muted);font-weight:600;font-size:11px;padding:6px 7px;border-bottom:1px solid var(--line);text-align:center;}
+  .creport td{padding:8px 7px;border-bottom:1px solid var(--line);text-align:center;vertical-align:top;}
+  .creport tr:last-child td{border-bottom:none;}
+  .creport td.right{text-align:right;}
+  .creport .dayname{font-weight:700;white-space:nowrap;}
+  .creport .dayname span{display:block;font-weight:400;font-size:10px;color:var(--muted);margin-top:2px;}
+  .creport .acts{color:var(--muted);font-size:11.5px;line-height:1.8;}
+  .creport .acts b{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;}
+  .creport .amount{font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+  .creport tr.zero td{opacity:0.45;}
+  .creport-wrap{overflow-x:auto;}
+
+  /* ---------- warning badge (extra/out-of-routine tasks) ---------- */
+  .extrabadge{background:rgba(224,102,95,0.16);color:var(--danger);border:1px solid rgba(224,102,95,0.35);border-radius:20px;padding:2px 8px;font-size:10.5px;font-family:'Vazirmatn',sans-serif;white-space:nowrap;}
+
+  /* ---------- extra tasks (out-of-routine / sayer) section ---------- */
+  .extratasks{margin:8px 0;}
+  .extratasks-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+  .extratask-row{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:6px 9px;}
+  .extratask-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--good);flex-shrink:0;cursor:pointer;}
+  .extratask-row input[type=text]{flex:1;min-width:0;background:none;border:none;color:var(--text);font-size:12.5px;font-family:'Vazirmatn',sans-serif;outline:none;}
+  .extratask-row.done input[type=text]{text-decoration:line-through;color:var(--muted);}
+  .extratask-row button.del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:5px;flex-shrink:0;}
+  .extratask-row button.del:hover{color:var(--danger);background:rgba(224,102,95,0.12);}
+  .extratask-add{display:block;width:100%;background:none;border:1px dashed var(--line);color:var(--muted);font-family:'Vazirmatn',sans-serif;font-size:11.5px;padding:7px;border-radius:9px;cursor:pointer;}
+  .extratask-add:hover{color:var(--morning);border-color:var(--morning);}
+
+  /* ---------- monthly view ---------- */
+  .month-loading{color:var(--muted);text-align:center;padding:26px 0;font-size:12.5px;}
+  .monthday{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;border-inline-start:4px solid var(--line);}
+  .monthday[data-type=morning]{border-inline-start-color:var(--morning);}
+  .monthday[data-type=evening]{border-inline-start-color:var(--evening);}
+  .monthday[data-type=night]{border-inline-start-color:var(--night);}
+  .monthday[data-type=off]{border-inline-start-color:var(--off);}
+  .monthday[data-type=mn]{border-inline-start-color:var(--mn);}
+  .monthday[data-type=me]{border-inline-start-color:var(--me);}
+  .monthday[data-type=morakhasi]{border-inline-start-color:var(--morakhasi);}
+  .monthday-head{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap;margin-bottom:8px;}
+
+  /* ---------- monthly calendar grid (like a real calendar sheet) ---------- */
+  .monthgrid-wrap{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;}
+  .monthgrid-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;}
+  .monthgrid-dow span{display:flex;align-items:center;justify-content:center;height:28px;border-radius:50%;background:var(--surface-2);font-size:12px;font-weight:700;color:var(--muted);}
+  .monthgrid-dow span.fri{color:var(--evening);}
+  .monthgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .monthcell{position:relative;aspect-ratio:1/1;min-height:54px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:2px;border-inline-start:3px solid transparent;}
+  .monthcell.empty{background:none;border:none;cursor:default;}
+  .monthcell.fri{background:rgba(91,127,212,0.13);}
+  .monthcell.today{box-shadow:inset 0 0 0 2px var(--morning);}
+  .monthcell.selected{box-shadow:inset 0 0 0 2px var(--text);}
+  .monthcell.today.selected{box-shadow:inset 0 0 0 2px var(--morning), inset 0 0 0 4px var(--text);}
+  .monthcell[data-type=morning]{border-inline-start-color:var(--morning);}
+  .monthcell[data-type=evening]{border-inline-start-color:var(--evening);}
+  .monthcell[data-type=night]{border-inline-start-color:var(--night);}
+  .monthcell[data-type=off]{border-inline-start-color:var(--off);}
+  .monthcell[data-type=mn]{border-inline-start-color:var(--mn);}
+  .monthcell[data-type=me]{border-inline-start-color:var(--me);}
+  .monthcell[data-type=morakhasi]{border-inline-start-color:var(--morakhasi);}
+  .monthcell:hover{border-color:var(--morning);}
+  .monthcell .jd{font-weight:700;font-size:12.5px;color:var(--muted);line-height:1.1;}
+  .monthcell .gd{font-family:'JetBrains Mono','Vazirmatn',monospace;font-size:23px;font-weight:800;color:var(--muted);letter-spacing:0.01em;line-height:1.15;margin-top:1px;}
+  .monthcell .gd.shiftcode-morning{color:var(--morning);}
+  .monthcell .gd.shiftcode-evening{color:var(--evening);}
+  .monthcell .gd.shiftcode-night{color:var(--night);}
+  .monthcell .gd.long{font-size:17px;}
+  .monthcell .gd.shiftcode-mn{color:var(--mn);}
+  .monthcell .gd.shiftcode-me{color:var(--me);}
+  .monthcell .gd.shiftcode-off{color:var(--off);}
+  .monthcell .gd.shiftcode-morakhasi{color:var(--morakhasi);}
+  .monthcell .dots{position:absolute;bottom:4px;display:flex;gap:2px;}
+  .monthcell .dots i{width:5px;height:5px;border-radius:50%;display:block;}
+  .monthcell .dots i.extra{background:var(--danger);}
+  .monthcell .dots i.ev{background:var(--event);}
+  @media (max-width:520px){
+    .monthcell{min-height:52px;}
+    .monthcell .jd{font-size:10.5px;}
+    .monthcell .gd{font-size:18px;}
+    .monthcell .gd.long{font-size:13.5px;}
+  }
+
+  .monthdetail{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;border-inline-start:4px solid var(--line);}
+  .monthdetail[data-type=morning]{border-inline-start-color:var(--morning);}
+  .monthdetail[data-type=evening]{border-inline-start-color:var(--evening);}
+  .monthdetail[data-type=night]{border-inline-start-color:var(--night);}
+  .monthdetail[data-type=off]{border-inline-start-color:var(--off);}
+  .monthdetail[data-type=mn]{border-inline-start-color:var(--mn);}
+  .monthdetail[data-type=me]{border-inline-start-color:var(--me);}
+  .monthdetail[data-type=morakhasi]{border-inline-start-color:var(--morakhasi);}
+  .monthdetail-head{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap;margin-bottom:8px;}
+  .monthdetail-title{font-weight:700;font-size:14.5px;}
+  .monthdetail-title .g{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .monthdetail-evbtn{margin-top:10px;}
+
+  /* ---------- event chips/badges ---------- */
+  .evchip{display:inline-flex;align-items:center;gap:4px;background:rgba(224,179,77,0.16);color:var(--event);border:1px solid rgba(224,179,77,0.4);border-radius:20px;padding-block:2px;padding-inline:8px 4px;font-size:10.5px;white-space:nowrap;}
+  .evchip .evdel{background:none;border:none;color:var(--event);opacity:0.6;cursor:pointer;font-size:10px;line-height:1;padding:3px 4px;border-radius:50%;font-family:'Vazirmatn',sans-serif;}
+  .evchip .evdel:hover{opacity:1;color:var(--danger);background:rgba(224,102,95,0.18);}
+
+  /* ---------- events modal ---------- */
+  .eventrow{border-top:1px solid var(--line);padding:10px 2px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;}
+  .eventrow:first-child{border-top:none;}
+  .eventrow input[type=text]{flex:1 1 150px;min-width:110px;background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:6px 8px;font-size:13px;font-family:'Vazirmatn',sans-serif;}
+  .eventrow select{background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:6px 8px;font-size:12px;font-family:'Vazirmatn',sans-serif;}
+  .eventrow input[type=number]{width:62px;background:var(--surface-2);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:6px 8px;font-size:12px;font-family:'JetBrains Mono',monospace;}
+  .eventrow .fieldlabel{font-size:10.5px;color:var(--muted);}
+  .eventrow .del{margin-inline-start:auto;display:inline-flex;align-items:center;gap:5px;background:none;border:1px solid var(--line);color:var(--muted);cursor:pointer;font-size:12px;font-family:'Vazirmatn',sans-serif;padding:5px 10px;border-radius:8px;}
+  .eventrow .del:hover{color:var(--danger);border-color:var(--danger);background:rgba(224,102,95,0.12);}
+  .event-empty{color:var(--muted);font-size:12px;text-align:center;padding:14px 0;}
+
+  /* ---------- inline shift picker (opens right at the clicked month-grid cell) ---------- */
+  .shiftpicker{position:fixed;z-index:70;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 10px 28px rgba(0,0,0,0.45);display:flex;flex-direction:column;gap:2px;min-width:150px;}
+  .shiftpicker button{background:none;border:none;color:var(--text);text-align:start;padding:8px 10px;border-radius:8px;font-family:'Vazirmatn',sans-serif;font-size:12.5px;cursor:pointer;}
+  .shiftpicker button:hover{background:var(--surface-2);}
+  .shiftpicker button.clear{color:var(--muted);border-top:1px solid var(--line);margin-top:3px;padding-top:9px;}
+
+  /* ---------- report interpretation ---------- */
+  .interpret{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--text);line-height:1.85;}
+  .interpret:empty{display:none;}
+
+  /* ---------- monthly shift-count pills ---------- */
+  .shiftcounts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .shiftcounts .sc{background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12px;display:flex;align-items:center;gap:6px;}
+  .shiftcounts .sc .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .shiftcounts .sc b{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- backup / print toolbar ---------- */
+  .toolbar2{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;}
+
+  /* ---------- print / PDF ---------- */
+  .print-only{display:none;}
+  .printoverlay{position:fixed;inset:0;z-index:200;background:#fff;color:#111;overflow:auto;padding:14px;}
+  .printbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #ddd;}
+  .printbar button{font-family:'Vazirmatn',sans-serif;font-size:13px;border-radius:10px;padding:9px 14px;cursor:pointer;border:1px solid #bbb;background:#f4f4f4;color:#111;}
+  .printbar button.primary{background:#111;color:#fff;border-color:#111;font-weight:700;}
+  .printbar .printhint{font-size:11px;color:#666;flex:1 1 100%;line-height:1.7;}
+  #printArea{font-family:'Vazirmatn',sans-serif;color:#111;background:#fff;max-width:900px;margin:0 auto;overflow-x:auto;}
+  .printoverlay .prweek{min-width:660px;}
+  #printArea h1{font-size:17px;margin:0 0 3px;}
+  #printArea .prsub{font-size:11px;color:#444;margin-bottom:12px;}
+  #printArea .prtable{width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:12px;table-layout:fixed;}
+  #printArea .prtable th,#printArea .prtable td{padding:5px 6px;text-align:center;border:1px solid #999;vertical-align:middle;}
+  #printArea .prtable th{background:#eee;font-weight:700;}
+  #printArea .prtable tfoot th{background:#fff;}
+  #printArea .prtable td.right{text-align:right;}
+  #printArea .printerp{font-size:10.5px;line-height:1.85;color:#111;border:1px solid #999;padding:9px 11px;}
+  #printArea .prcols{display:flex;gap:12px;align-items:flex-start;}
+  #printArea .prcols > div{flex:1;min-width:0;}
+  #printArea .prsec{font-size:12px;font-weight:700;margin:0 0 5px;}
+  /* weekly planner: one column per day, activities listed inside the cell */
+  #printArea .prweek{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;margin-bottom:12px;}
+  #printArea .prweek th,#printArea .prweek td{border:1px solid #999;padding:4px;vertical-align:top;}
+  #printArea .prweek th{background:#eee;font-size:10px;text-align:center;}
+  #printArea .prweek th .dt{display:block;font-weight:400;font-size:8.5px;color:#444;margin-top:2px;}
+  #printArea .prweek li{list-style:none;margin:0 0 3px;padding:0 0 3px;border-bottom:1px dotted #ccc;line-height:1.45;}
+  #printArea .prweek li:last-child{border-bottom:none;}
+  #printArea .prweek li b{font-weight:700;display:block;font-size:8.5px;}
+  #printArea .prweek ul{margin:0;padding:0;}
+  /* monthly: plain black & white calendar, nothing around it */
+  #printArea .prcal{width:100%;border-collapse:collapse;table-layout:fixed;}
+  #printArea .prcal th{border:1px solid #111;padding:6px 2px;font-size:11px;font-weight:700;background:#fff;text-align:center;}
+  #printArea .prcal td{border:1px solid #111;height:74px;padding:4px 3px;vertical-align:top;text-align:center;}
+  #printArea .prcal td.empty{border-color:#ddd;}
+  #printArea .prcal .d{font-size:10px;color:#444;text-align:right;}
+  #printArea .prcal .s{font-size:24px;font-weight:800;font-family:'JetBrains Mono','Vazirmatn',monospace;margin-top:8px;letter-spacing:0.5px;}
+  #printArea .prcal .n{font-size:8px;color:#333;margin-top:3px;line-height:1.35;}
+  @media print{
+    body > *:not(#printOverlay){ display:none !important; }
+    #printOverlay{ position:static !important; padding:0 !important; overflow:visible !important; }
+    .no-print{ display:none !important; }
+    html,body{ background:#fff !important; }
+    #printArea{ max-width:none; overflow:visible !important; }
+    #printArea .prweek{ min-width:0 !important; }
+    #printArea .prcal td{ height:80px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>برنامه هفتگی سامان</h1>
+  <div class="sub">قالب بر اساس نوع شیفت — هر هفته رو خودت می‌سازی</div>
+
+  <div class="weekbar" id="weekBar">
+    <button class="navbtn" onclick="shiftWeek(-1)">›</button>
+    <div class="weekrange">
+      <span id="weekRangeText">—</span>
+      <span class="g" id="weekRangeGreg">—</span>
+    </div>
+    <button class="navbtn" onclick="shiftWeek(1)">‹</button>
+    <input type="date" id="datePick" onchange="pickDate(this.value)">
+    <button class="savebtn" onclick="saveWeek()">💾 ذخیره این هفته</button>
+    <span class="savestatus" id="saveStatus">—</span>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--morning)"></span>صبح</span>
+    <span><span class="dot" style="background:var(--evening)"></span>عصر</span>
+    <span><span class="dot" style="background:var(--night)"></span>شب</span>
+    <span><span class="dot" style="background:var(--me)"></span>صبح+عصر</span>
+    <span><span class="dot" style="background:var(--mn)"></span>صبح+شب</span>
+    <span><span class="dot" style="background:var(--off)"></span>آف بعد شب</span>
+    <span><span class="dot" style="background:var(--morakhasi)"></span>مرخصی</span>
+  </div>
+
+  <div class="viewbar">
+    <button class="todaybtn" onclick="goToToday()">📅 برو به امروز</button>
+    <div class="viewswitch">
+      <button id="viewWeekBtn" class="active" onclick="setViewMode('week')">نمایش هفتگی</button>
+      <button id="viewDayBtn" onclick="setViewMode('day')">نمایش روزانه</button>
+      <button id="viewMonthBtn" onclick="setViewMode('month')">نمایش ماهانه</button>
+    </div>
+    <button class="tmplbtn" onclick="openTmplModal()">⚙ ویرایش الگوهای شیفت</button>
+    <button class="tmplbtn" onclick="openCatModal()">🏷 دسته‌بندی فعالیت‌ها</button>
+    <button class="tmplbtn" onclick="openEventsModal()">🎉 مناسبت‌ها</button>
+  </div>
+
+  <div class="toolbar2">
+    <button class="tmplbtn" onclick="exportBackup()">⬇ خروجی پشتیبان</button>
+    <button class="tmplbtn" onclick="triggerImportBackup()">⬆ ورودی پشتیبان</button>
+    <input type="file" id="backupFileInput" accept="application/json" class="hidden" onchange="importBackupFile(this)">
+    <button class="tmplbtn" onclick="preparePrintAndOpen()">🖨 خروجی PDF</button>
+  </div>
+
+  <div class="daynav hidden" id="dayNav">
+    <button class="navbtn" onclick="shiftDay(-1)">›</button>
+    <span class="daynavlabel" id="dayNavLabel">—</span>
+    <button class="navbtn" onclick="shiftDay(1)">‹</button>
+    <button class="savebtn" onclick="saveWeek()">💾 ذخیره این روز</button>
+    <span class="savestatus" id="daySaveStatus">—</span>
+  </div>
+
+  <div class="daynav hidden" id="monthNav">
+    <button class="navbtn" onclick="shiftMonth(-1)">›</button>
+    <span class="daynavlabel" id="monthNavLabel">—</span>
+    <button class="navbtn" onclick="shiftMonth(1)">‹</button>
+    <button class="savebtn" onclick="saveWholeMonth()">💾 ذخیره این ماه</button>
+    <span class="savestatus" id="monthSaveStatus">—</span>
+  </div>
+
+
+  <div id="days"></div>
+
+  <div class="report" id="reportBox">
+    <h2 id="reportTitle">📊 گزارش عملکرد این هفته</h2>
+    <div class="desc" id="reportDesc">مجموع ساعت‌های هر دسته‌بندی (ساعت:دقیقه)، فقط از ردیف‌هایی که «انجام شد» زده‌ای</div>
+    <div id="chartWrap"></div>
+    <div class="interpret" id="reportInterpret"></div>
+  </div>
+
+  <div class="report" id="catReportBox">
+    <h2>⏱ گزارش زمان یک دسته‌بندی</h2>
+    <div class="desc" id="catReportDesc">یه دسته‌بندی رو انتخاب کن تا ببینی دقیقاً کِی و چقدر روش وقت گذاشتی</div>
+    <div class="catreport-bar">
+      <select id="catReportSelect" onchange="setCatReport(this.value)"></select>
+      <button class="tmplbtn" onclick="printCategoryReport()">🖨 خروجی چاپ این گزارش</button>
+    </div>
+    <div id="catReportBody"></div>
+  </div>
+
+  <div class="report hidden" id="monthReportBox">
+    <h2>📊 تحلیل ماه <span id="monthReportRange"></span></h2>
+    <div class="desc">مجموع ساعت‌های هر دسته‌بندی در طول ماه (از ردیف‌های «انجام شد»)، به‌همراه تعداد هر نوع شیفت</div>
+    <div id="monthChartWrap"></div>
+    <div class="shiftcounts" id="monthShiftCounts"></div>
+    <div class="interpret" id="monthReportInterpret"></div>
+  </div>
+
+  <div class="hint" id="hintWeek">تغییرات خودکار سیو نمی‌شن — یادت نره بعد از ویرایش، «ذخیره این هفته» رو بزنی</div>
+  <div class="hint hidden" id="hintMonth">توی نمایش ماهانه فقط شیفت هر روز رو انتخاب می‌کنی و کارهای خارج از برنامه (سایر) رو اضافه می‌کنی؛ این تغییرات خودش خودکار ذخیره می‌شه</div>
+</div>
+
+<div class="modal-overlay hidden" id="tmplModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>ویرایش الگوهای شیفت</h2>
+      <button class="modal-close" onclick="closeTmplModal()">✕</button>
+    </div>
+    <div class="modal-desc">اینجا برنامهٔ پیش‌فرض هر نوع شیفت رو تغییر بده. بعد از این، هروقت این شیفت رو برای یه روز انتخاب کنی، همین الگوی جدید لود می‌شه. دسته‌بندی‌های فعالیت رو هم می‌تونی از دکمهٔ «دسته‌بندی فعالیت‌ها» خودت تعریف کنی.</div>
+    <div class="tmpltabs" id="tmplTabs"></div>
+    <div id="tmplRows"></div>
+    <button class="tmpl-addrow" onclick="addTmplRow()">+ افزودن ردیف به این الگو</button>
+    <div class="modal-actions">
+      <button class="savebtn" onclick="saveTmplWorking()">💾 ذخیره الگو</button>
+      <button class="tmplbtn" onclick="closeTmplModal()">انصراف</button>
+      <span class="tmplstatus" id="tmplStatus"></span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="catModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>دسته‌بندی فعالیت‌ها</h2>
+      <button class="modal-close" onclick="closeCatModal()">✕</button>
+    </div>
+    <div class="modal-desc">دسته‌بندی‌های خودت رو اینجا بساز، اسم و رنگشون رو عوض کن یا حذفشون کن. تیک «روتین» یعنی این دسته بخشی از برنامهٔ همیشگی‌ته (در تحلیل‌ها، زمان روتین از زمان خارج از روتین جدا حساب می‌شه). تیک «توضیح» یعنی موقع ثبت فعالیت، یه فیلد توضیح تکمیلی هم کنارش باز بشه.</div>
+    <div id="catList"></div>
+    <button class="tmpl-addrow" onclick="addCatRow()">+ افزودن دسته‌بندی جدید</button>
+    <div class="modal-actions">
+      <button class="savebtn" onclick="saveCatWorking()">💾 ذخیره دسته‌بندی‌ها</button>
+      <button class="tmplbtn" onclick="resetCatDefaults()">بازگشت به حالت اولیه</button>
+      <button class="tmplbtn" onclick="closeCatModal()">انصراف</button>
+      <span class="tmplstatus" id="catStatus"></span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="eventsModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>مناسبت‌ها و رویدادها</h2>
+      <button class="modal-close" onclick="closeEventsModal()">✕</button>
+    </div>
+    <div class="modal-desc">رویدادهای مهم شخصیت مثل تولد یا سالگرد رو اینجا ثبت کن. نوع تکرار رو مشخص کن: «سالانه» یعنی هر سال همون روز و ماه شمسی تکرار می‌شه (مثل تولد)، «ماهانه» یعنی هر ماه همون روز، و «یک‌بار» یعنی فقط یه تاریخ مشخص. رویدادها روی نمای ماهانه، هفتگی و روزانه با نشونهٔ 🎉 نمایش داده می‌شن.</div>
+    <div id="eventsList"></div>
+    <button class="tmpl-addrow" onclick="addEventRow()">+ افزودن رویداد جدید</button>
+    <div class="modal-actions">
+      <button class="savebtn" onclick="saveEventsNow()">💾 ذخیره مناسبت‌ها</button>
+      <button class="tmplbtn" onclick="closeEventsModal()">بستن</button>
+      <span class="tmplstatus" id="eventsStatus"></span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="durModal">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-head">
+      <h2>چقدر وقت می‌خوای؟</h2>
+      <button class="modal-close" onclick="cancelDurModal()">✕</button>
+    </div>
+    <div class="modal-desc">مدت این فعالیت رو با دقت نیم‌ساعت انتخاب کن.</div>
+    <div class="durpicker">
+      <button type="button" id="durMinus" title="نیم ساعت کمتر">−</button>
+      <div class="durvalue" id="durValue">01:00<small>یک ساعت</small></div>
+      <button type="button" id="durPlus" title="نیم ساعت بیشتر">+</button>
+    </div>
+    <div class="durchips" id="durChips"></div>
+    <div class="durinfo" id="durInfo"></div>
+    <label class="durshift"><input type="checkbox" id="durShift" checked><span>برنامه‌های بعدی همین روز به همین اندازه عقب بیفتن</span></label>
+    <div class="modal-actions">
+      <button class="savebtn" onclick="confirmDurModal()">افزودن فعالیت</button>
+      <button class="tmplbtn" onclick="cancelDurModal()">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="printoverlay hidden" id="printOverlay">
+  <div class="printbar no-print">
+    <button class="primary" onclick="doPrintNow()">🖨 چاپ / ذخیره PDF</button>
+    <button onclick="closePrintPreview()">بستن</button>
+    <span class="printhint">این دقیقاً همون چیزیه که چاپ می‌شه. اگه روی آیفون پنجرهٔ چاپ باز نشد، از دکمهٔ اشتراک‌گذاری سافاری → «چاپ» استفاده کن (یا در پنجرهٔ چاپ، با انگشت روی پیش‌نمایش زوم کنی، گزینهٔ ذخیره PDF میاد).</span>
+  </div>
+  <div id="printArea"></div>
+</div>
+
+<div class="printoverlay hidden" id="textFallback">
+  <div class="printbar no-print">
+    <button class="primary" onclick="copyFallbackText()">📋 کپی همه</button>
+    <button onclick="document.getElementById('textFallback').classList.add('hidden')">بستن</button>
+    <span class="printhint">مرورگر اجازهٔ ساخت فایل نداد. متن پشتیبان رو از اینجا کپی کن و توی یادداشت یا فایل ذخیره‌ش کن.</span>
+  </div>
+  <textarea id="fallbackText" style="width:100%;height:70vh;font-family:monospace;font-size:11px;padding:8px;"></textarea>
+</div>
+
+<script>
+/* ---------- storage fallback (works when opened as a standalone file, outside Claude) ---------- */
+if(!window.storage){
+  window.storage = {
+    async get(key, shared){
+      const raw = localStorage.getItem('saman-plan:'+key);
+      if(raw===null){ throw new Error('key not found: '+key); }
+      return { key, value: raw, shared: !!shared };
+    },
+    async set(key, value, shared){
+      try{
+        localStorage.setItem('saman-plan:'+key, value);
+        return { key, value, shared: !!shared };
+      }catch(e){ console.error('local save failed', e); return null; }
+    },
+    async delete(key, shared){
+      try{
+        localStorage.removeItem('saman-plan:'+key);
+        return { key, deleted:true, shared: !!shared };
+      }catch(e){ return null; }
+    },
+    async list(prefix, shared){
+      try{
+        const p = 'saman-plan:'+(prefix||'');
+        const keys = Object.keys(localStorage).filter(k=>k.startsWith(p)).map(k=>k.slice('saman-plan:'.length));
+        return { keys, prefix, shared: !!shared };
+      }catch(e){ return null; }
+    }
+  };
+}
+
+/* ---------- Jalali <-> Gregorian conversion ---------- */
+function div(a,b){return ~~(a/b);}
+function mod(a,b){return a-~~(a/b)*b;}
+function jalCal(jy){
+  var breaks=[-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+  var bl=breaks.length, gy=jy+621, leapJ=-14, jp=breaks[0], jm,jump,leap,n,i;
+  for(i=1;i<bl;i+=1){ jm=breaks[i]; jump=jm-jp; if(jy<jm) break; leapJ+=div(jump,33)*8+div(mod(jump,33),4); jp=jm; }
+  n=jy-jp;
+  leapJ+=div(n,33)*8+div(mod(n,33)+3,4);
+  if(mod(jump,33)===4 && jump-n===4) leapJ+=1;
+  var leapG=div(gy,4)-div((div(gy,100)+1)*3,4)-150;
+  var march=20+leapJ-leapG;
+  if(jump-n<6) n=n-jump+div(jump,33)*33;
+  leap=mod(mod(n+1,33)-1,4);
+  if(leap===-1) leap=4;
+  return {leap:leap, gy:gy, march:march};
+}
+function g2d(gy,gm,gd){
+  var d=div((gy+div(gm-8,6)+100100)*1461,4)+div(153*mod(gm+9,12)+2,5)+gd-34840408;
+  d=d-div(div(gy+100100+div(gm-8,6),100)*3,4)+752;
+  return d;
+}
+function d2g(jdn){
+  var j=4*jdn+139361631;
+  j=j+div(div(4*jdn+183187720,146097)*3,4)*4-3908;
+  var i=div(mod(j,1461),4)*5+308;
+  var gd=div(mod(i,153),5)+1;
+  var gm=mod(div(i,153),12)+1;
+  var gy=div(j,1461)-100100+div(8-gm,6);
+  return [gy,gm,gd];
+}
+function j2d(jy,jm,jd){
+  var r=jalCal(jy);
+  return g2d(r.gy,3,r.march)+(jm-1)*31-div(jm,7)*(jm-7)+jd-1;
+}
+function d2j(jdn){
+  var gy=d2g(jdn)[0], jy=gy-621, r=jalCal(jy);
+  var jdn1f=g2d(r.gy,3,r.march);
+  var k=jdn-jdn1f, jm,jd;
+  if(k>=0){
+    if(k<=185){ jm=1+div(k,31); jd=mod(k,31)+1; return [jy,jm,jd]; }
+    else{ k-=186; }
+  } else { jy-=1; k+=179; if(r.leap===1) k+=1; }
+  jm=7+div(k,30); jd=mod(k,30)+1;
+  return [jy,jm,jd];
+}
+function gregorianToJalali(gy,gm,gd){ return d2j(g2d(gy,gm,gd)); }
+
+const jMonths=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+const faDigits=['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+function toFa(n){ return String(n).replace(/[0-9]/g, d=>faDigits[d]); }
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function jalaliLabel(gy,gm,gd){
+  const [jy,jm,jd]=gregorianToJalali(gy,gm,gd);
+  return toFa(jd)+' '+jMonths[jm-1]+' '+toFa(jy);
+}
+
+/* ---------- date helpers ---------- */
+/* IMPORTANT: build the key from the *local* calendar date. toISOString() converts to
+   UTC first, so in time zones ahead of UTC (Tehran is +03:30) a local midnight became
+   the previous day — which is why data entered in the month view could disappear. */
+function toISO(d){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+/* the old (buggy) key format — still read once, so nothing saved before this fix is lost */
+function legacyISO(d){ try{ return d.toISOString().slice(0,10); }catch(e){ return null; } }
+function fromISO(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function saturdayOnOrBefore(d){
+  const dow=d.getDay();
+  const diff=(dow-6+7)%7;
+  const r=addDays(d,-diff);
+  r.setHours(0,0,0,0);   /* keys must not depend on the time of day */
+  return r;
+}
+
+/* ---------- shift templates ---------- */
+/* Off = روز بعد از شیفت شب (شبش بیدار بوده) — با مرخصی فرق داره:
+   مرخصی یعنی شب قبلش شیفت نبوده و کل روز آزاده */
+const shiftLabels={
+  morning:'صبح',
+  evening:'عصر',
+  night:'شب',
+  me:'صبح+عصر (پشت‌سرهم)',
+  mn:'صبح+شب',
+  off:'آف — بعد از شیفت شب',
+  morakhasi:'مرخصی — روز کاملاً آزاد'
+};
+const shiftCode={morning:'M',evening:'E',night:'N',me:'ME',mn:'MN',off:'Off',morakhasi:'م'};
+/* short labels for tight spots (legends, print keys) */
+const shiftShort={morning:'صبح',evening:'عصر',night:'شب',me:'صبح+عصر',mn:'صبح+شب',off:'آف بعد شب',morakhasi:'مرخصی'};
+function shiftCodeOf(type){ return type ? (shiftCode[type]||'') : '–'; }
+/* ---------- activity categories (fully editable by the user) ----------
+   v = stable id stored inside every row, l = label, c = colour,
+   routine = counts as part of the routine, note = shows the extra note field */
+const defaultCategories=[
+  {v:'kar',       l:'بیمارستان',     c:'#f2a65a', routine:true,  note:false},
+  {v:'mali',      l:'شرکت',          c:'#e2c14d', routine:true,  note:false},
+  {v:'class',     l:'کلاس',          c:'#7dd3c0', routine:true,  note:false},
+  {v:'zendegi',   l:'زندگی شخصی',    c:'#8ea4c7', routine:true,  note:false},
+  {v:'dd',        l:'ترانه',         c:'#c968a3', routine:true,  note:false},
+  {v:'esterahat', l:'استراحت/چرت',   c:'#6b7885', routine:true,  note:false},
+  {v:'khab',      l:'خواب',          c:'#5b7fd4', routine:true,  note:false},
+  {v:'sayer',     l:'سایر',          c:'#9a9a9a', routine:false, note:true}
+];
+let categories = JSON.parse(JSON.stringify(defaultCategories));
+
+function catOf(v){ return categories.find(c=>c.v===v) || null; }
+function catLabel(v){ const c=catOf(v); return c ? c.l : (v ? 'دستهٔ حذف‌شده' : '—'); }
+function catColorOf(v){ const c=catOf(v); return c ? c.c : '#9a9a9a'; }
+function catHasNote(v){ const c=catOf(v); return !!(c && c.note); }
+function defaultRowCategory(){ return catOf('sayer') ? 'sayer' : (categories[0] ? categories[0].v : 'sayer'); }
+function newCatId(){ return 'c'+Date.now().toString(36)+Math.floor(Math.random()*1000).toString(36); }
+function normalizeCategories(arr){
+  const out=[];
+  (Array.isArray(arr)?arr:[]).forEach(c=>{
+    if(!c || !c.v) return;
+    if(out.some(o=>o.v===c.v)) return;
+    out.push({
+      v:String(c.v),
+      l:String(c.l||'بدون نام'),
+      c:/^#[0-9a-fA-F]{6}$/.test(c.c||'') ? c.c : '#9a9a9a',
+      routine: c.routine!==false,
+      note: !!c.note
+    });
+  });
+  return out.length ? out : JSON.parse(JSON.stringify(defaultCategories));
+}
+/* one-off rename: old label -> new label, only applied when the saved label is still the
+   old default (so a name the user picked themselves is never overwritten) */
+const categoryRenames = {
+  kar:  {from:['کار اصلی'],            to:'بیمارستان'},
+  mali: {from:['مدیریت مالی'],          to:'شرکت'},
+  dd:   {from:['دوست‌دختر','دوست دختر'], to:'ترانه'}
+};
+function applyCategoryRenames(list){
+  let changed=false;
+  list.forEach(c=>{
+    const r=categoryRenames[c.v];
+    if(r && r.from.indexOf(c.l)>=0){ c.l=r.to; changed=true; }
+  });
+  return changed;
+}
+async function loadCategories(){
+  try{
+    const res = await window.storage.get('categories', false);
+    if(res && res.value){
+      categories = normalizeCategories(JSON.parse(res.value));
+      if(applyCategoryRenames(categories)){
+        try{ await window.storage.set('categories', JSON.stringify(categories), false); }catch(e){}
+      }
+    }
+  }catch(e){}
+}
+async function persistCategories(next){
+  categories = normalizeCategories(next);
+  try{
+    const res = await window.storage.set('categories', JSON.stringify(categories), false);
+    return !!res;
+  }catch(e){ return false; }
+}
+/* how much of the time went to categories marked as routine */
+function routineSplit(sums){
+  let routine=0, extra=0;
+  categories.forEach(c=>{ const v=sums[c.v]||0; if(c.routine) routine+=v; else extra+=v; });
+  return {routine, extra};
+}
+
+function tmplRow(s,e,a,c,note){ return {start:s,end:e,activity:a,category:c,note:note||''}; }
+
+const defaultTemplates={
+  morning:[
+    tmplRow('07:10','14:30','شیفت آزمایشگاه','kar'),
+    tmplRow('14:30','15:30','ناهار و استراحت','esterahat'),
+    tmplRow('15:30','17:30','کارهای زندگی شخصی','zendegi'),
+    tmplRow('17:30','19:30','کارهای شرکت','mali'),
+    tmplRow('19:30','22:00','وقت آزاد با ترانه','dd'),
+    tmplRow('22:00','24:00','فیلم و بازی','esterahat'),
+  ],
+  evening:[
+    tmplRow('08:30','09:30','بیدار شدن، صبحونه','esterahat'),
+    tmplRow('09:30','11:30','کارهای شرکت','mali'),
+    tmplRow('11:30','13:30','کارهای زندگی شخصی','zendegi'),
+    tmplRow('14:30','21:30','شیفت آزمایشگاه','kar'),
+    tmplRow('21:30','23:00','برگشت، شام، استراحت','esterahat'),
+  ],
+  night:[
+    tmplRow('21:30','07:30','شیفت شب','kar'),
+    tmplRow('07:30','13:00','خواب اصلی','khab'),
+    tmplRow('13:00','14:00','ناهار','esterahat'),
+    tmplRow('14:00','16:00','کارهای شرکت','mali'),
+    tmplRow('16:00','21:00','وقت آزاد با ترانه','dd'),
+  ],
+  me:[
+    tmplRow('07:10','14:30','شیفت صبح آزمایشگاه','kar'),
+    tmplRow('14:30','15:00','ناهار سریع بین دو شیفت','esterahat'),
+    tmplRow('15:00','21:30','شیفت عصر آزمایشگاه','kar'),
+    tmplRow('21:30','22:30','برگشت، شام و دوش','esterahat'),
+    tmplRow('22:30','23:30','وقت آزاد با ترانه','dd'),
+    tmplRow('23:30','07:00','خواب','khab'),
+  ],
+  mn:[
+    tmplRow('07:30','14:30','شیفت صبح','kar'),
+    tmplRow('14:30','17:00','استراحت / چرت اجباری','esterahat'),
+    tmplRow('17:00','19:00','کارهای شرکت (در صورت توان)','mali'),
+    tmplRow('19:00','21:00','شام، آماده شدن','esterahat'),
+    tmplRow('21:30','07:30','شیفت شب','kar'),
+  ],
+  /* روز بعد از شیفت شب: شب قبلش نخوابیده، پس اول جبران خواب */
+  off:[
+    tmplRow('07:30','08:30','برگشت از بیمارستان، صبحونه و دوش','esterahat'),
+    tmplRow('08:30','14:30','خواب جبرانی بعد از شب‌بیداری','khab'),
+    tmplRow('14:30','15:30','بیدار شدن آروم و ناهار','esterahat'),
+    tmplRow('15:30','17:00','کارهای سبک زندگی شخصی','zendegi'),
+    tmplRow('17:00','19:00','کارهای شرکت','mali'),
+    tmplRow('19:00','22:00','وقت آزاد با ترانه','dd'),
+    tmplRow('22:00','23:30','آماده شدن برای خواب','esterahat'),
+    tmplRow('23:30','07:00','خواب شب','khab'),
+  ],
+  /* مرخصی: شب قبلش شیفت نبوده و کل روز دست خودشه */
+  morakhasi:[
+    tmplRow('08:30','09:30','بیدار شدن بدون آلارم، صبحونه','esterahat'),
+    tmplRow('09:30','11:00','ورزش / پیاده‌روی','zendegi'),
+    tmplRow('11:00','13:00','کارهای عقب‌افتادهٔ زندگی شخصی','zendegi'),
+    tmplRow('13:00','14:30','ناهار و استراحت','esterahat'),
+    tmplRow('14:30','16:30','کارهای شرکت','mali'),
+    tmplRow('16:30','18:00','مطالعه / کلاس','class'),
+    tmplRow('18:00','22:00','وقت آزاد با ترانه','dd'),
+    tmplRow('22:00','24:00','فیلم و بازی','esterahat'),
+  ]
+};
+
+/* current (possibly user-edited) templates — falls back to defaults, persisted separately from week data */
+let templates = JSON.parse(JSON.stringify(defaultTemplates));
+
+/* merge whatever was saved with the defaults, so shift types added later always exist */
+/* the same one-off rename as the categories, but for activity text saved inside templates */
+const activityRenames = [
+  ['مدیریت مالی شرکت',            'کارهای شرکت'],
+  ['مدیریت مالی (در صورت توان)',  'کارهای شرکت (در صورت توان)'],
+  ['مدیریت مالی',                 'کارهای شرکت'],
+  ['وقت آزاد / دوست‌دختر',        'وقت آزاد با ترانه'],
+  ['وقت آزاد / دوست دختر',        'وقت آزاد با ترانه']
+];
+function renameActivity(txt){
+  const t=String(txt||'');
+  for(const [from,to] of activityRenames){ if(t===from) return to; }
+  return t;
+}
+function normalizeTemplates(saved){
+  const out = JSON.parse(JSON.stringify(defaultTemplates));
+  if(saved && typeof saved==='object'){
+    Object.keys(shiftLabels).forEach(k=>{
+      if(Array.isArray(saved[k])) out[k]=saved[k].map(r=>Object.assign({}, r, {activity:renameActivity(r.activity)}));
+    });
+  }
+  return out;
+}
+async function loadTemplates(){
+  try{
+    const res = await window.storage.get('shift-templates', false);
+    templates = normalizeTemplates(res && res.value ? JSON.parse(res.value) : null);
+  }catch(e){ templates = JSON.parse(JSON.stringify(defaultTemplates)); }
+}
+async function persistTemplates(newTemplates){
+  try{
+    const res = await window.storage.set('shift-templates', JSON.stringify(newTemplates), false);
+    return !!res;
+  }catch(e){ return false; }
+}
+
+const dayNames=['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
+
+/* ---------- events / occasions (birthdays, anniversaries, custom reminders) ---------- */
+/* each event: {id, title, type:'yearly'|'monthly'|'once', month(1-12, for yearly/once), day(1-31), year(for once, Jalali)} */
+let events = [];
+let eventsSaveTimer = null;
+
+async function loadEvents(){
+  try{
+    const res = await window.storage.get('events', false);
+    events = (res && res.value) ? JSON.parse(res.value) : [];
+    if(!Array.isArray(events)) events = [];
+  }catch(e){ events = []; }
+  /* older saves (and imported backups) may have no id — deleting needs one */
+  events.forEach((ev,i)=>{ if(ev && !ev.id) ev.id='ev'+Date.now()+'x'+i; });
+}
+function debounceSaveEvents(){
+  setEventsStatus('در حال ذخیره...');
+  if(eventsSaveTimer) clearTimeout(eventsSaveTimer);
+  eventsSaveTimer = setTimeout(async ()=>{
+    try{
+      const res = await window.storage.set('events', JSON.stringify(events), false);
+      setEventsStatus(res ? '✓ ذخیره شد' : '⚠ ذخیره نشد');
+    }catch(e){ setEventsStatus('⚠ ذخیره نشد'); }
+  }, 500);
+}
+function setEventsStatus(t){
+  const el=document.getElementById('eventsStatus');
+  if(el) el.textContent = t;
+}
+function eventsOnJalaliDate(jy,jm,jd){
+  return events.filter(ev=>{
+    if(ev.type==='yearly') return Number(ev.month)===jm && Number(ev.day)===jd;
+    if(ev.type==='monthly') return Number(ev.day)===jd;
+    if(ev.type==='once') return Number(ev.year)===jy && Number(ev.month)===jm && Number(ev.day)===jd;
+    return false;
+  });
+}
+function eventsOnGregorianDate(date){
+  const [jy,jm,jd]=gregorianToJalali(date.getFullYear(),date.getMonth()+1,date.getDate());
+  return eventsOnJalaliDate(jy,jm,jd);
+}
+function eventChipsHtml(date){
+  const evs = eventsOnGregorianDate(date);
+  return evs.map(ev=>`<span class="evchip">🎉 ${escapeHtml(ev.title||'رویداد')}<button class="evdel no-print" title="حذف این مناسبت" onclick="deleteEventById('${escapeHtml(ev.id||'')}')">✕</button></span>`).join('');
+}
+/* delete an occasion straight from the day/month view, without opening the modal */
+async function deleteEventById(id){
+  const i = events.findIndex(e=>e.id===id);
+  if(i<0) return;
+  const name = events[i].title || 'این مناسبت';
+  if(!confirm('«'+name+'» حذف بشه؟')) return;
+  events.splice(i,1);
+  if(eventsSaveTimer){ clearTimeout(eventsSaveTimer); eventsSaveTimer=null; }
+  try{ await window.storage.set('events', JSON.stringify(events), false); }catch(e){}
+  if(!document.getElementById('eventsModal').classList.contains('hidden')) renderEventsModal();
+  if(viewMode==='month') rerenderMonthUI(); else renderAll();
+}
+
+function openEventsModal(){
+  closeShiftPicker();
+  document.getElementById('eventsModal').classList.remove('hidden');
+  renderEventsModal();
+}
+function closeEventsModal(){
+  document.getElementById('eventsModal').classList.add('hidden');
+  if(viewMode==='month') rerenderMonthUI();
+  else renderAll();
+}
+function renderEventsModal(){
+  const wrap=document.getElementById('eventsList');
+  wrap.innerHTML='';
+  if(!events.length){
+    const e=document.createElement('div'); e.className='event-empty'; e.textContent='هنوز رویدادی ثبت نشده.';
+    wrap.appendChild(e);
+  } else {
+    events.forEach((ev,i)=> wrap.appendChild(buildEventRow(ev,i)));
+  }
+  document.getElementById('eventsStatus').textContent='';
+}
+function buildEventRow(ev, idx){
+  const row=document.createElement('div');
+  row.className='eventrow';
+
+  const titleInp=document.createElement('input');
+  titleInp.type='text'; titleInp.placeholder='عنوان رویداد (مثلاً تولد مامان)'; titleInp.value=ev.title||'';
+  titleInp.oninput=()=>{ ev.title=titleInp.value; debounceSaveEvents(); };
+  row.appendChild(titleInp);
+
+  const typeSel=document.createElement('select');
+  [['yearly','سالانه'],['monthly','ماهانه'],['once','یک‌بار']].forEach(([v,l])=>{
+    const o=document.createElement('option'); o.value=v; o.textContent=l;
+    if(ev.type===v) o.selected=true;
+    typeSel.appendChild(o);
+  });
+  row.appendChild(typeSel);
+
+  const fieldsWrap=document.createElement('div');
+  fieldsWrap.style.display='flex'; fieldsWrap.style.gap='6px'; fieldsWrap.style.alignItems='center'; fieldsWrap.style.flexWrap='wrap';
+  row.appendChild(fieldsWrap);
+
+  function renderFields(){
+    fieldsWrap.innerHTML='';
+    if(ev.type==='yearly' || ev.type==='once'){
+      if(!ev.month) ev.month=1;
+      const mSel=document.createElement('select');
+      jMonths.forEach((mn,mi)=>{
+        const o=document.createElement('option'); o.value=mi+1; o.textContent=mn;
+        if(Number(ev.month)===mi+1) o.selected=true;
+        mSel.appendChild(o);
+      });
+      mSel.onchange=()=>{ ev.month=Number(mSel.value); renderFields(); debounceSaveEvents(); };
+      fieldsWrap.appendChild(mSel);
+    }
+
+    ensureMonthCursor();
+    const maxDay = ev.type==='monthly'
+      ? 31
+      : jalaliMonthLength(ev.type==='once' ? Number(ev.year||monthViewJY||1403) : (monthViewJY||1403), Number(ev.month)||1);
+    if(!ev.day || ev.day>maxDay) ev.day = Math.min(ev.day||1, maxDay);
+    const dSel=document.createElement('select');
+    for(let d=1; d<=maxDay; d++){
+      const o=document.createElement('option'); o.value=d; o.textContent=toFa(d);
+      if(Number(ev.day)===d) o.selected=true;
+      dSel.appendChild(o);
+    }
+    dSel.onchange=()=>{ ev.day=Number(dSel.value); debounceSaveEvents(); };
+    fieldsWrap.appendChild(dSel);
+    const dLabel=document.createElement('span'); dLabel.className='fieldlabel'; dLabel.textContent='روز';
+    fieldsWrap.appendChild(dLabel);
+
+    if(ev.type==='once'){
+      if(!ev.year) ev.year = monthViewJY || 1403;
+      const centerY = monthViewJY || 1403;
+      const ySel=document.createElement('select');
+      for(let y=centerY-5; y<=centerY+7; y++){
+        const o=document.createElement('option'); o.value=y; o.textContent=toFa(y);
+        if(Number(ev.year)===y) o.selected=true;
+        ySel.appendChild(o);
+      }
+      ySel.onchange=()=>{ ev.year=Number(ySel.value); renderFields(); debounceSaveEvents(); };
+      fieldsWrap.appendChild(ySel);
+      const yLabel=document.createElement('span'); yLabel.className='fieldlabel'; yLabel.textContent='سال شمسی';
+      fieldsWrap.appendChild(yLabel);
+    }
+  }
+  typeSel.onchange=()=>{
+    ev.type=typeSel.value;
+    if(ev.type!=='once') delete ev.year;
+    renderFields();
+    debounceSaveEvents();
+  };
+  renderFields();
+
+  const delBtn=document.createElement('button');
+  delBtn.className='del'; delBtn.innerHTML='🗑 <span>حذف</span>'; delBtn.title='حذف این مناسبت';
+  delBtn.onclick=()=>{
+    const name = ev.title || 'این مناسبت';
+    if(!confirm('«'+name+'» حذف بشه؟')) return;
+    events.splice(idx,1);
+    debounceSaveEvents();
+    renderEventsModal();
+  };
+  row.appendChild(delBtn);
+
+  return row;
+}
+function addEventRow(prefill){
+  ensureMonthCursor();
+  const base = { id:'ev'+Date.now()+Math.floor(Math.random()*1000), title:'', type:'yearly', month: monthViewJM||1, day:1 };
+  events.push(Object.assign(base, prefill||{}));
+  debounceSaveEvents();
+  renderEventsModal();
+}
+
+/* ---------- state ---------- */
+let weekStart = saturdayOnOrBefore(new Date());
+let weekData = null;
+let rowSeq = 1;
+
+function normalizeDay(d){
+  if(!d) d={};
+  return {
+    type: d.type || null,
+    rows: Array.isArray(d.rows) ? d.rows : [],
+    extraTasks: Array.isArray(d.extraTasks) ? d.extraTasks : []
+  };
+}
+function normalizeDays(days){
+  const arr = Array.isArray(days) ? days : [];
+  const out = [];
+  for(let i=0;i<7;i++){ out.push(normalizeDay(arr[i])); }
+  return out;
+}
+function emptyWeek(){ return { days: dayNames.map(()=>({type:null, rows:[], extraTasks:[]})) }; }
+function loadTemplateInto(dayObj, type){
+  dayObj.type = type;
+  dayObj.rows = templates[type].map(r=>({id:'r'+(rowSeq++), start:r.start,end:r.end,activity:r.activity,category:r.category,note:r.note||'',done:false}));
+}
+
+/* ---------- duration ---------- */
+function minutesOf(hhmm){ const [h,m]=hhmm.split(':').map(Number); return h*60+m; }
+function durationMinutes(start,end){
+  let a=minutesOf(start), b=minutesOf(end);
+  let diff=b-a; if(diff<=0) diff+=24*60;
+  return Math.round(diff/5)*5;
+}
+function durationLabel(mins){
+  const h=Math.floor(mins/60), m=mins%60;
+  const hh=String(h).padStart(2,'0'), mm=String(m).padStart(2,'0');
+  return toFa(hh+':'+mm);
+}
+function addMinutesToTime(hhmm, addMin){
+  let total = minutesOf(hhmm) + addMin;
+  total = ((total % (24*60)) + 24*60) % (24*60);
+  const hh=String(Math.floor(total/60)).padStart(2,'0'), mm=String(total%60).padStart(2,'0');
+  return hh+':'+mm;
+}
+/* ---------- 24-hour time field ----------
+   the native <input type="time"> follows the browser's locale, so on a lot of phones it
+   shows AM/PM. this is a plain text field instead, so the format is always HH:MM (24h),
+   identical on every browser. it accepts Persian/Arabic digits and loose input like
+   "7", "730" or "19:5" and tidies it up when the field loses focus. */
+const _enDigit = s => String(s)
+  .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+  .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+
+function parseTime(raw){
+  const s = _enDigit(raw).trim().replace(/[^\d:]/g,'');
+  if(!s) return null;
+  let h, m;
+  if(s.indexOf(':')>=0){
+    const p = s.split(':');
+    h = parseInt(p[0],10);
+    m = p[1]==='' ? 0 : parseInt(p[1],10);
+  } else if(s.length<=2){
+    h = parseInt(s,10); m = 0;
+  } else {
+    const d = s.slice(0,4);
+    const cut = d.length===3 ? 1 : 2;
+    h = parseInt(d.slice(0,cut),10);
+    m = parseInt(d.slice(cut),10);
+  }
+  if(isNaN(h)) return null;
+  if(isNaN(m)) m = 0;
+  if(h===24 && m===0) return '24:00';   /* the templates use 24:00 as "end of day" */
+  h = ((h % 24) + 24) % 24;
+  m = Math.min(59, Math.max(0, m));
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function normTime(raw, fallback){ return parseTime(raw) || fallback || '00:00'; }
+
+/* makeTimeInput(value, role, onCommit) — the browser's own time picker, exactly like before,
+   but pinned to 24-hour HH:MM. the format of <input type="time"> follows the element's
+   language, so lang="en-GB" gets rid of the AM/PM field regardless of the phone's locale. */
+function makeTimeInput(value, role, onCommit){
+  const inp = document.createElement('input');
+  inp.type = 'time';
+  inp.className = 'timeinput';
+  inp.setAttribute('lang','en-GB');   /* 24-hour, no AM/PM */
+  inp.dir = 'ltr';
+  if(role) inp.dataset.role = role;
+
+  let cur = normTime(value, '00:00');
+  /* a time input can't hold 24:00, so it's shown as 00:00 while the row keeps 24:00 */
+  inp.value = (cur === '24:00') ? '00:00' : cur;
+
+  inp.oninput = ()=>{
+    if(!inp.value) return;            /* cleared or half-picked — wait for a real value */
+    cur = inp.value;
+    if(onCommit) onCommit(cur);
+  };
+  inp.onblur = ()=>{ if(!inp.value) inp.value = (cur === '24:00') ? '00:00' : cur; };
+
+  inp.setValue = (v)=>{ cur = normTime(v, cur); inp.value = (cur === '24:00') ? '00:00' : cur; };
+  inp.getValue = ()=> cur;
+  return inp;
+}
+
+/* ---------- reordering keeps the time slots, not the times ----------
+   moving an activity up or down swaps it with its neighbour and re-times both, so each
+   activity keeps its own length but the block of time they share stays where it was.
+   e.g. sleep 13:00–14:00 above work 14:00–16:00, move sleep down →
+        work 13:00–15:00, sleep 15:00–16:00. */
+function rawDuration(start, end){
+  let d = minutesOf(end) - minutesOf(start);
+  if(d <= 0) d += 24*60;
+  return d;
+}
+function moveRowKeepingTimes(rows, i, j){
+  if(i === j || i < 0 || j < 0 || i >= rows.length || j >= rows.length) return false;
+  const a = Math.min(i,j), b = Math.max(i,j);
+  if(b - a !== 1){ /* not adjacent — plain swap without re-timing */
+    const t = rows[a]; rows[a] = rows[b]; rows[b] = t;
+    return true;
+  }
+  const first = rows[a], second = rows[b];
+  const anchor   = first.start;
+  const blockEnd = second.end;
+  const gap      = (((minutesOf(second.start) - minutesOf(first.end)) % (24*60)) + 24*60) % (24*60);
+  const dFirst   = rawDuration(first.start,  first.end);
+  const dSecond  = rawDuration(second.start, second.end);
+
+  rows[a] = second; rows[b] = first;
+
+  rows[a].start = anchor;
+  rows[a].end   = addMinutesToTime(anchor, dSecond);
+  rows[b].start = addMinutesToTime(rows[a].end, gap);
+  rows[b].end   = addMinutesToTime(rows[b].start, dFirst);
+  if(blockEnd === '24:00' && rows[b].end === '00:00') rows[b].end = '24:00';
+  return true;
+}
+
+function refreshRowUI(row){
+  const card = document.querySelector('.rowcard[data-rowid="'+row.id+'"]');
+  if(!card) return;
+  const startInp = card.querySelector('.timeinput[data-role=start]');
+  const endInp = card.querySelector('.timeinput[data-role=end]');
+  const dur = card.querySelector('.durlabel');
+  if(startInp && startInp.setValue) startInp.setValue(row.start);
+  if(endInp && endInp.setValue) endInp.setValue(row.end);
+  if(dur) dur.textContent = durationLabel(durationMinutes(row.start,row.end));
+}
+
+/* ---------- storage: one single source of truth for every week ----------
+   weekCache holds every week touched during this session, keyed by the ISO date of its
+   Saturday. The weekly, daily and monthly views all read and write through it, so moving
+   between months (or views) can never show stale/empty data, and a failed read can never
+   overwrite good data with a blank week. */
+const weekCache = {};
+
+async function storageGetWeek(keyISO){
+  try{
+    const res = await window.storage.get('week-'+keyISO, false);
+    if(res && res.value) return normalizeDays(JSON.parse(res.value));
+  }catch(e){}
+  return null;
+}
+/* read a week: memory first, then storage, then the legacy (off-by-one) key which gets
+   migrated to the correct one the first time it's found */
+async function readWeekDays(weekStartDate){
+  const key = toISO(weekStartDate);
+  if(weekCache[key]) return weekCache[key];
+  let days = await storageGetWeek(key);
+  if(!days){
+    /* old keys landed either on the same day or one day earlier, depending on the view
+       that wrote them — check both, then migrate whatever is found to the correct key */
+    const candidates = [toISO(addDays(weekStartDate,-1)), legacyISO(weekStartDate)]
+      .filter((k,i,a)=> k && k!==key && a.indexOf(k)===i);
+    for(const cand of candidates){
+      const old = await storageGetWeek(cand);
+      if(old){
+        days = old;
+        try{ await window.storage.set('week-'+key, JSON.stringify(days), false); }catch(e){}
+        break;
+      }
+    }
+  }
+  if(!days) days = normalizeDays([]);
+  weekCache[key] = days;
+  return days;
+}
+async function writeWeekDays(keyISO, days){
+  if(days) weekCache[keyISO] = days;
+  const data = weekCache[keyISO];
+  if(!data) return false;
+  try{
+    const res = await window.storage.set('week-'+keyISO, JSON.stringify(data), false);
+    return !!res;
+  }catch(e){ console.error('save error', e); return false; }
+}
+
+async function saveWeek(){
+  const ok = await writeWeekDays(toISO(weekStart), weekData.days);
+  renderSaveStatus(ok, !ok);
+}
+async function loadWeek(){
+  weekData = { days: await readWeekDays(weekStart) };
+  renderAll();
+  renderSaveStatus(false);
+}
+function renderSaveStatus(saved, failed){
+  ['saveStatus','daySaveStatus'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(failed){ el.textContent='⚠ ذخیره نشد'; el.className='savestatus dirty'; return; }
+    if(saved){ el.textContent='✓ ذخیره شد'; el.className='savestatus saved'; }
+    else { el.textContent='● تغییرات ذخیره‌نشده'; el.className='savestatus dirty'; }
+  });
+}
+function markDirty(){ renderSaveStatus(false); }
+
+/* ---------- view mode ---------- */
+let viewMode = 'week'; // 'week' | 'day' | 'month'
+let dayViewIndex = 0; // 0-6, used when viewMode === 'day'
+let monthViewJY = null, monthViewJM = null; // Jalali year/month, used when viewMode === 'month'
+let monthWeeksData = {}; // weekKeyISO -> normalized days array, populated while month view is active
+let selectedMonthDate = null; // Date currently shown in the month-view detail panel
+let openPicker = null; // currently open inline shift-picker popover element, if any
+let monthRenderToken = 0; // guards against two month loads finishing out of order
+const monthSaveTimers = {};
+
+/* ---------- inline shift picker (a small popover anchored to the clicked month-grid cell) ---------- */
+function closeShiftPicker(){
+  if(openPicker){
+    openPicker.remove();
+    openPicker=null;
+    document.removeEventListener('click', shiftPickerOutsideHandler, true);
+  }
+}
+function shiftPickerOutsideHandler(e){
+  if(openPicker && !openPicker.contains(e.target)){ closeShiftPicker(); }
+}
+function openShiftPicker(cellEl, date, dayObj, wk){
+  closeShiftPicker();
+  const pop=document.createElement('div');
+  pop.className='shiftpicker';
+
+  Object.keys(shiftLabels).forEach(k=>{
+    const b=document.createElement('button');
+    b.textContent = shiftLabels[k];
+    b.onclick=(ev)=>{
+      ev.stopPropagation();
+      dayObj.type=k;
+      dayObj.rows = templates[k].map(r=>({id:'r'+(rowSeq++), start:r.start,end:r.end,activity:r.activity,category:r.category,note:r.note||'',done:false}));
+      saveMonthWeek(wk);
+      closeShiftPicker();
+      rerenderMonthUI();
+    };
+    pop.appendChild(b);
+  });
+  const clearBtn=document.createElement('button');
+  clearBtn.className='clear';
+  clearBtn.textContent='— بدون شیفت —';
+  clearBtn.onclick=(ev)=>{
+    ev.stopPropagation();
+    dayObj.type=null; dayObj.rows=[];
+    saveMonthWeek(wk);
+    closeShiftPicker();
+    rerenderMonthUI();
+  };
+  pop.appendChild(clearBtn);
+
+  document.body.appendChild(pop);
+  const rect=cellEl.getBoundingClientRect();
+  const popW = 150, popH = pop.offsetHeight || 220;
+  let top = rect.bottom+6;
+  if(top+popH > window.innerHeight-8) top = Math.max(8, rect.top-popH-6);
+  let left = rect.left;
+  if(left+popW > window.innerWidth-8) left = window.innerWidth-8-popW;
+  if(left<8) left=8;
+  pop.style.top = top+'px';
+  pop.style.left = left+'px';
+
+  openPicker=pop;
+  setTimeout(()=> document.addEventListener('click', shiftPickerOutsideHandler, true), 0);
+}
+
+/* ---------- go to today (works from any view mode) ---------- */
+async function goToToday(){
+  closeShiftPicker();
+  const wasMonth = viewMode==='month';
+  const t=new Date();
+  weekStart = saturdayOnOrBefore(t);
+  dayViewIndex = weekIdxOf(t);
+  selectedMonthDate = null;
+  viewMode='day';
+  document.getElementById('viewWeekBtn').classList.remove('active');
+  document.getElementById('viewDayBtn').classList.add('active');
+  document.getElementById('viewMonthBtn').classList.remove('active');
+  document.getElementById('dayNav').classList.remove('hidden');
+  document.getElementById('monthNav').classList.add('hidden');
+  document.getElementById('weekBar').classList.remove('hidden');
+  document.getElementById('reportBox').classList.remove('hidden');
+  document.getElementById('hintWeek').classList.remove('hidden');
+  document.getElementById('hintMonth').classList.add('hidden');
+  if(wasMonth) await flushMonthSaves();
+  loadWeek();
+}
+
+async function setViewMode(mode){
+  closeShiftPicker();
+  const cameFromMonth = viewMode==='month' && mode!=='month';
+  viewMode = mode;
+  document.getElementById('viewWeekBtn').classList.toggle('active', mode==='week');
+  document.getElementById('viewDayBtn').classList.toggle('active', mode==='day');
+  document.getElementById('viewMonthBtn').classList.toggle('active', mode==='month');
+  document.getElementById('dayNav').classList.toggle('hidden', mode!=='day');
+  document.getElementById('monthNav').classList.toggle('hidden', mode!=='month');
+  document.getElementById('weekBar').classList.toggle('hidden', mode==='month');
+  document.getElementById('reportBox').classList.toggle('hidden', mode==='month');
+  document.getElementById('monthReportBox').classList.toggle('hidden', mode!=='month');
+  document.getElementById('hintWeek').classList.toggle('hidden', mode==='month');
+  document.getElementById('hintMonth').classList.toggle('hidden', mode!=='month');
+  if(cameFromMonth){
+    // make sure every pending debounced save from month view has actually landed in storage
+    // before re-fetching the week, so the change is guaranteed to show up here
+    await flushMonthSaves();
+    // jump week/day view to the exact date that was selected/edited in month view,
+    // so switching views lands you on that same day with its shift already applied
+    if(selectedMonthDate){
+      weekStart = saturdayOnOrBefore(selectedMonthDate);
+      dayViewIndex = weekIdxOf(selectedMonthDate);
+    }
+    loadWeek();
+  }
+  else { renderAll(); }
+}
+
+/* ---------- week nav ---------- */
+function shiftWeek(dir){ weekStart=addDays(weekStart, dir*-7); loadWeek(); }
+function pickDate(v){
+  const d = fromISO(v);
+  weekStart = saturdayOnOrBefore(d);
+  dayViewIndex = weekIdxOf(d);
+  loadWeek();
+}
+
+/* ---------- day nav (daily view) ---------- */
+function shiftDay(dir){
+  dayViewIndex += dir;
+  if(dayViewIndex<0){ dayViewIndex=6; shiftWeek(-1); return; }
+  if(dayViewIndex>6){ dayViewIndex=0; shiftWeek(1); return; }
+  renderAll();
+}
+function renderDayNav(){
+  const d = addDays(weekStart, dayViewIndex);
+  document.getElementById('dayNavLabel').textContent = dayNames[dayViewIndex]+' — '+jalaliLabel(d.getFullYear(),d.getMonth()+1,d.getDate());
+}
+
+function renderWeekRange(){
+  const end=addDays(weekStart,6);
+  const jStart=jalaliLabel(weekStart.getFullYear(),weekStart.getMonth()+1,weekStart.getDate());
+  const jEnd=jalaliLabel(end.getFullYear(),end.getMonth()+1,end.getDate());
+  document.getElementById('weekRangeText').textContent = 'از '+jStart+' تا '+jEnd;
+  document.getElementById('weekRangeGreg').textContent = toISO(weekStart)+' → '+toISO(end);
+  document.getElementById('datePick').value = toISO(weekStart);
+}
+
+/* ---------- render ---------- */
+function renderAll(){
+  if(viewMode==='month'){
+    renderMonthView();
+    return;
+  }
+  renderWeekRange();
+  const container=document.getElementById('days');
+  container.innerHTML='';
+  if(viewMode==='day'){
+    renderDayNav();
+    container.appendChild(buildDayCard(weekData.days[dayViewIndex], dayViewIndex));
+  } else {
+    weekData.days.forEach((dayObj, idx)=>{ container.appendChild(buildDayCard(dayObj, idx)); });
+  }
+  renderChart();
+}
+
+function buildDayCard(dayObj, idx){
+  const d = addDays(weekStart, idx);
+  const dayEl=document.createElement('div');
+  dayEl.className='day';
+  dayEl.dataset.type = dayObj.type || '';
+
+  const pendingExtra = dayObj.extraTasks.filter(t=>!t.done).length;
+  const head=document.createElement('div');
+  head.className='day-head';
+  head.innerHTML = `
+    <div class="day-title">
+      <span class="name">${dayNames[idx]}</span>
+      <span class="jdate">${jalaliLabel(d.getFullYear(),d.getMonth()+1,d.getDate())}</span>
+      ${pendingExtra>0 ? `<span class="extrabadge">⚠ ${toFa(pendingExtra)} کار خارج از برنامه</span>` : ''}
+      ${eventChipsHtml(d)}
+    </div>
+    <div class="day-right">
+      <span class="daytotal" id="tot-${idx}"></span>
+      <select class="shiftsel">
+        <option value="" ${!dayObj.type?'selected':''}>— انتخاب شیفت —</option>
+        ${Object.keys(shiftLabels).map(k=>`<option value="${k}" ${dayObj.type===k?'selected':''}>${shiftLabels[k]}</option>`).join('')}
+      </select>
+    </div>
+  `;
+  head.querySelector('select').addEventListener('change', (e)=>{
+    const val=e.target.value;
+    if(!val){ dayObj.type=null; dayObj.rows=[]; }
+    else { loadTemplateInto(dayObj, val); }
+    markDirty();
+    renderAll();
+  });
+  dayEl.appendChild(head);
+
+  const extraOuter=document.createElement('div');
+  extraOuter.style.padding='0 14px';
+  extraOuter.appendChild(buildExtraTasksSection(dayObj, (structural)=>{
+    markDirty();
+    if(structural) renderAll();
+  }));
+  dayEl.appendChild(extraOuter);
+
+  if(!dayObj.type){
+    const empty=document.createElement('div');
+    empty.className='empty-day';
+    empty.textContent='شیفت این روز رو از منوی بالا انتخاب کن';
+    dayEl.appendChild(empty);
+    return dayEl;
+  }
+
+  const rowsWrap=document.createElement('div');
+  dayObj.rows.forEach(row=> rowsWrap.appendChild(buildRow(dayObj, row, idx)));
+  dayEl.appendChild(rowsWrap);
+
+  const addBtn=document.createElement('button');
+  addBtn.className='add-row';
+  addBtn.textContent='+ افزودن ردیف';
+  addBtn.onclick=async ()=>{
+    const last=dayObj.rows.length ? dayObj.rows[dayObj.rows.length-1] : null;
+    const startTime=last ? last.end : '12:00';
+    const res=await openDurModal({defaultMin:60, startTime, followers:0});
+    if(!res) return;
+    insertActivityAfter(dayObj, dayObj.rows.length-1, startTime, res.minutes, false);
+    markDirty();
+    renderAll();
+  };
+  dayEl.appendChild(addBtn);
+
+  updateDayTotal(dayObj, idx);
+  return dayEl;
+}
+
+/* ---------- "how long?" prompt, shown whenever a new activity is added ---------- */
+const DUR_STEP=30, DUR_MIN=30, DUR_MAX=12*60;
+const _numWords=['','یک','دو','سه','چهار','پنج','شش','هفت','هشت','نه','ده','یازده','دوازده'];
+function humanDur(mins){
+  const h=Math.floor(mins/60), half=(mins%60)>=30;
+  if(h===0) return 'نیم ساعت';
+  const hw=_numWords[h]||toFa(h);
+  return hw+' ساعت'+(half?' و نیم':'');
+}
+let durState=null, durWired=false;
+
+function wireDurModal(){
+  if(durWired) return;
+  durWired=true;
+  document.getElementById('durMinus').onclick=()=>setDurMinutes(durState?durState.minutes-DUR_STEP:60);
+  document.getElementById('durPlus').onclick =()=>setDurMinutes(durState?durState.minutes+DUR_STEP:60);
+  document.getElementById('durShift').onchange=renderDurModal;
+  document.getElementById('durModal').addEventListener('mousedown',(ev)=>{
+    if(ev.target.id==='durModal') cancelDurModal();
+  });
+  document.addEventListener('keydown',(ev)=>{
+    if(!durState) return;
+    if(ev.key==='Escape'){ ev.preventDefault(); cancelDurModal(); }
+    else if(ev.key==='Enter'){ ev.preventDefault(); confirmDurModal(); }
+    else if(ev.key==='ArrowUp'){ ev.preventDefault(); setDurMinutes(durState.minutes+DUR_STEP); }
+    else if(ev.key==='ArrowDown'){ ev.preventDefault(); setDurMinutes(durState.minutes-DUR_STEP); }
+  });
+}
+function setDurMinutes(mins){
+  if(!durState) return;
+  durState.minutes=Math.min(DUR_MAX, Math.max(DUR_MIN, Math.round(mins/DUR_STEP)*DUR_STEP));
+  renderDurModal();
+}
+function renderDurModal(){
+  if(!durState) return;
+  const mins=durState.minutes;
+
+  document.getElementById('durValue').innerHTML =
+    durationLabel(mins)+'<small>'+humanDur(mins)+'</small>';
+  document.getElementById('durMinus').disabled = mins<=DUR_MIN;
+  document.getElementById('durPlus').disabled  = mins>=DUR_MAX;
+
+  const chips=document.getElementById('durChips');
+  chips.innerHTML='';
+  [30,60,90,120,180,240].forEach(v=>{
+    const b=document.createElement('button');
+    b.type='button';
+    b.textContent=humanDur(v);
+    if(v===mins) b.className='active';
+    b.onclick=()=>setDurMinutes(v);
+    chips.appendChild(b);
+  });
+
+  const endTime=addMinutesToTime(durState.start, mins);
+  const shiftOn=document.getElementById('durShift').checked;
+  const lines=['فعالیت جدید: <b>'+toFa(durState.start)+'</b> تا <b>'+toFa(endTime)+'</b>'];
+  if(durState.followers>0){
+    lines.push(shiftOn
+      ? toFa(durState.followers)+' برنامهٔ بعدیِ این روز '+humanDur(mins)+' عقب می‌افتن.'
+      : toFa(durState.followers)+' برنامهٔ بعدی سرِ جاش می‌مونه و با این فعالیت هم‌پوشانی پیدا می‌کنه.');
+  }
+  document.getElementById('durInfo').innerHTML=lines.join('<br>');
+}
+function openDurModal(opts){
+  wireDurModal();
+  return new Promise(resolve=>{
+    durState={
+      minutes: opts.defaultMin||60,
+      start: normTime(opts.startTime,'12:00'),
+      followers: opts.followers||0,
+      resolve
+    };
+    const chk=document.getElementById('durShift');
+    chk.checked = durState.followers>0;
+    chk.parentElement.style.display = durState.followers>0 ? 'flex' : 'none';
+    document.getElementById('durModal').classList.remove('hidden');
+    renderDurModal();
+  });
+}
+function closeDurModal(result){
+  document.getElementById('durModal').classList.add('hidden');
+  const st=durState; durState=null;
+  if(st) st.resolve(result);
+}
+function cancelDurModal(){ closeDurModal(null); }
+function confirmDurModal(){
+  if(!durState) return;
+  closeDurModal({minutes:durState.minutes, shift:document.getElementById('durShift').checked});
+}
+
+/* insert a new activity after index i, optionally pushing everything after it later */
+function insertActivityAfter(dayObj, i, startTime, mins, shift){
+  if(shift){
+    for(let k=i+1;k<dayObj.rows.length;k++){
+      dayObj.rows[k].start=addMinutesToTime(dayObj.rows[k].start, mins);
+      dayObj.rows[k].end  =addMinutesToTime(dayObj.rows[k].end,   mins);
+    }
+  }
+  dayObj.rows.splice(i+1,0,{
+    id:'r'+(rowSeq++), start:startTime, end:addMinutesToTime(startTime,mins),
+    activity:'فعالیت جدید', category:defaultRowCategory(), note:'', done:false
+  });
+}
+
+function buildRow(dayObj, row, dayIdx){
+  const card=document.createElement('div');
+  card.className='rowcard' + (row.done ? ' done' : '');
+  card.dataset.rowid = row.id;
+
+  const timegroup=document.createElement('div');
+  timegroup.className='timegroup';
+  const durSpan=document.createElement('span'); durSpan.className='durlabel';
+  function refreshDur(){ durSpan.textContent = durationLabel(durationMinutes(row.start,row.end)); }
+  const startInp=makeTimeInput(row.start,'start',(v)=>{
+    row.start=v; refreshDur(); markDirty(); updateDayTotal(dayObj,dayIdx); renderChart();
+  });
+  const dash=document.createElement('span'); dash.className='dash'; dash.textContent='–';
+  const endInp=makeTimeInput(row.end,'end',(v)=>{
+    row.end=v; refreshDur(); markDirty();
+    const idx=dayObj.rows.indexOf(row);
+    if(idx>=0 && idx+1<dayObj.rows.length){
+      const nextRow=dayObj.rows[idx+1];
+      nextRow.start = row.end;
+      refreshRowUI(nextRow);
+    }
+    updateDayTotal(dayObj,dayIdx); renderChart();
+  });
+  refreshDur();
+  timegroup.appendChild(startInp); timegroup.appendChild(dash); timegroup.appendChild(endInp); timegroup.appendChild(durSpan);
+  card.appendChild(timegroup);
+
+  const actField=document.createElement('div');
+  actField.className='activity-field';
+  const actSpan=document.createElement('span');
+  actSpan.contentEditable='true';
+  actSpan.textContent=row.activity;
+  actSpan.oninput=()=>{ row.activity=actSpan.textContent; markDirty(); };
+  actField.appendChild(actSpan);
+  card.appendChild(actField);
+
+  const metagroup=document.createElement('div');
+  metagroup.className='metagroup';
+  const catSel=document.createElement('select');
+  catSel.className='catsel';
+  if(row.category && !catOf(row.category)){
+    const o=document.createElement('option'); o.value=row.category; o.textContent='⚠ دستهٔ حذف‌شده'; o.selected=true;
+    catSel.appendChild(o);
+  }
+  categories.forEach(c=>{
+    const o=document.createElement('option'); o.value=c.v; o.textContent=c.l;
+    if(c.v===row.category) o.selected=true;
+    catSel.appendChild(o);
+  });
+  metagroup.appendChild(catSel);
+
+  const doneWrap=document.createElement('label'); doneWrap.className='donewrap';
+  const chk=document.createElement('input'); chk.type='checkbox'; chk.checked=row.done;
+  chk.onchange=()=>{ row.done=chk.checked; card.className='rowcard'+(row.done?' done':''); markDirty(); updateDayTotal(dayObj,dayIdx); renderChart(); };
+  doneWrap.appendChild(chk);
+  doneWrap.appendChild(document.createTextNode('انجام شد'));
+  metagroup.appendChild(doneWrap);
+  card.appendChild(metagroup);
+
+  const noteWrap=document.createElement('div');
+  noteWrap.className='notewrap';
+  noteWrap.style.display = catHasNote(row.category) ? 'flex' : 'none';
+  const noteInp=document.createElement('input');
+  noteInp.type='text';
+  noteInp.placeholder='توضیح تکمیلی... (فقط همین‌جا دیده می‌شه، در نمودار زیر همین دسته‌بندی ثبت می‌شه)';
+  noteInp.value = row.note || '';
+  noteInp.oninput=()=>{ row.note=noteInp.value; markDirty(); };
+  noteWrap.appendChild(noteInp);
+  card.appendChild(noteWrap);
+
+  catSel.onchange=()=>{
+    row.category=catSel.value; markDirty(); renderChart();
+    noteWrap.style.display = catHasNote(row.category) ? 'flex' : 'none';
+  };
+
+  const actiongroup=document.createElement('div');
+  actiongroup.className='actiongroup';
+  const plusBtn=document.createElement('button'); plusBtn.textContent='+'; plusBtn.title='افزودن ردیف بعد از این';
+  plusBtn.onclick=async ()=>{
+    const i=dayObj.rows.indexOf(row);
+    if(i<0) return;
+    const res=await openDurModal({defaultMin:60, startTime:row.end, followers:dayObj.rows.length-(i+1)});
+    if(!res) return;
+    insertActivityAfter(dayObj, i, row.end, res.minutes, res.shift);
+    markDirty(); renderAll();
+  };
+  const upBtn=document.createElement('button'); upBtn.textContent='↑'; upBtn.title='بالا';
+  upBtn.onclick=()=>{ const i=dayObj.rows.indexOf(row); if(i>0 && moveRowKeepingTimes(dayObj.rows,i,i-1)){ markDirty(); renderAll(); } };
+  const downBtn=document.createElement('button'); downBtn.textContent='↓'; downBtn.title='پایین';
+  downBtn.onclick=()=>{ const i=dayObj.rows.indexOf(row); if(i<dayObj.rows.length-1 && moveRowKeepingTimes(dayObj.rows,i,i+1)){ markDirty(); renderAll(); } };
+  const delBtn=document.createElement('button'); delBtn.textContent='🗑'; delBtn.className='del'; delBtn.title='حذف';
+  delBtn.onclick=()=>{ const i=dayObj.rows.indexOf(row); dayObj.rows.splice(i,1); markDirty(); renderAll(); };
+  actiongroup.appendChild(plusBtn); actiongroup.appendChild(upBtn); actiongroup.appendChild(downBtn); actiongroup.appendChild(delBtn);
+  card.appendChild(actiongroup);
+
+  return card;
+}
+
+function updateDayTotal(dayObj, idx){
+  const el=document.getElementById('tot-'+idx);
+  if(!el) return;
+  let total=0, done=0;
+  dayObj.rows.forEach(r=>{ const m=durationMinutes(r.start,r.end); total+=m; if(r.done) done+=m; });
+  el.textContent = durationLabel(done)+' / '+durationLabel(total);
+}
+
+/* ---------- shared analysis helpers ---------- */
+function computeCategorySums(rows){
+  const sums={};
+  categories.forEach(c=> sums[c.v]=0);
+  let totalDone=0, totalPlanned=0;
+  rows.forEach(r=>{
+    const m=durationMinutes(r.start,r.end);
+    totalPlanned+=m;
+    if(r.done){ sums[r.category]=(sums[r.category]||0)+m; totalDone+=m; }
+  });
+  return {sums, totalDone, totalPlanned};
+}
+/* simple heuristic interpretation of a category-sum breakdown, in plain Persian */
+function buildInterpretation(sums, totalDone){
+  if(!totalDone || totalDone<=0) return 'هنوز داده‌ای برای تحلیل ثبت نشده — وقتی ردیف‌ها رو «انجام شد» بزنی، اینجا یه جمع‌بندی کوتاه می‌بینی.';
+  let top=null;
+  categories.forEach(c=>{ if(sums[c.v]>0 && (!top || sums[c.v]>sums[top.v])) top=c; });
+  const lines=[];
+  if(top){
+    const pct=Math.round((sums[top.v]/totalDone)*100);
+    lines.push('بیشترین زمان ثبت‌شده صرف «'+top.l+'» شده، حدود '+toFa(pct)+'٪ از کل زمانی که تیک «انجام شد» خورده.');
+  }
+  const rs = routineSplit(sums);
+  if(rs.extra>0 && rs.routine>0){
+    const pct=Math.round((rs.extra/totalDone)*100);
+    lines.push('از این زمان، '+durationLabel(rs.routine)+' روی دسته‌بندی‌های روتین و '+durationLabel(rs.extra)+' خارج از روتین بوده (حدود '+toFa(pct)+'٪).');
+  }
+  const work=sums['kar']||0;
+  const life=(sums['zendegi']||0)+(sums['dd']||0)+(sums['esterahat']||0);
+  if(work>0 && life>0){
+    if(work > life*1.5) lines.push('زمان کاری به‌طور محسوسی بیشتر از زمان زندگی شخصی و استراحته.');
+    else if(life > work*1.5) lines.push('زمان زندگی شخصی و استراحت بیشتر از زمان کاری بوده.');
+  }
+  const sleep=sums['khab']||0;
+  if(sleep>0 && sleep < totalDone*0.12) lines.push('سهم «خواب» نسبت به کل زمان ثبت‌شده کمه؛ به استراحت کافی توجه کن.');
+  return lines.join(' ');
+}
+function renderBarChartInto(wrapId, sums){
+  const wrap=document.getElementById(wrapId);
+  if(!wrap) return;
+  const maxVal = Math.max(...Object.values(sums), 1);
+  const anyDone = Object.values(sums).some(v=>v>0);
+  if(!anyDone){
+    wrap.innerHTML = '<div class="report-empty">هنوز هیچ فعالیتی «انجام شد» نزدی. وقتی کارها رو تیک بزنی، اینجا نمودار ساعت‌هات به تفکیک دسته‌بندی نشون داده می‌شه.</div>';
+    return;
+  }
+  const chart=document.createElement('div');
+  chart.className='chart';
+  categories.forEach(c=>{
+    const val=sums[c.v]||0;
+    /* every bar is tall enough to hold its own number inside the column */
+    const heightPx = val>0 ? Math.max(32, (val/maxVal)*155) : 26;
+    const col=document.createElement('div');
+    col.className='bar-col';
+    const stack=document.createElement('div');
+    stack.className='bar-stack';
+    const barEl=document.createElement('div');
+    barEl.className='bar'+(val>0?'':' zero');
+    barEl.style.height=heightPx+'px';
+    if(val>0) barEl.style.background=catColorOf(c.v);
+    const valEl=document.createElement('div');
+    valEl.className='bar-val';
+    valEl.textContent=durationLabel(val);
+    barEl.appendChild(valEl);
+    stack.appendChild(barEl);
+    col.appendChild(stack);
+    const labelEl=document.createElement('div');
+    labelEl.className='bar-label';
+    labelEl.textContent=c.l;
+    col.appendChild(labelEl);
+    chart.appendChild(col);
+  });
+  wrap.innerHTML='';
+  wrap.appendChild(chart);
+}
+
+/* ---------- report chart (day / week scope, depends on current viewMode) ---------- */
+function renderChart(){
+  let rows=[], title='', desc='';
+  if(viewMode==='day'){
+    const d = weekData.days[dayViewIndex];
+    rows = d ? d.rows : [];
+    title = '📊 گزارش عملکرد '+dayNames[dayViewIndex];
+    desc = 'مجموع ساعت‌های هر دسته‌بندی (ساعت:دقیقه)، فقط از ردیف‌های «انجام شد»‌شدهٔ همین روز';
+  } else {
+    weekData.days.forEach(d=>{ rows = rows.concat(d.rows); });
+    title = '📊 گزارش عملکرد این هفته';
+    desc = 'مجموع ساعت‌های هر دسته‌بندی (ساعت:دقیقه)، فقط از ردیف‌هایی که «انجام شد» زده‌ای';
+  }
+  const titleEl=document.getElementById('reportTitle'), descEl=document.getElementById('reportDesc');
+  if(titleEl) titleEl.textContent=title;
+  if(descEl) descEl.textContent=desc;
+  const {sums, totalDone} = computeCategorySums(rows);
+  renderBarChartInto('chartWrap', sums);
+  const interpEl=document.getElementById('reportInterpret');
+  if(interpEl) interpEl.textContent = buildInterpretation(sums, totalDone);
+  renderCategoryReport();
+}
+
+/* ---------- monthly analysis (category totals + shift-type counts across the whole jalali month) ---------- */
+function computeMonthAnalysis(dates){
+  const sums={};
+  categories.forEach(c=> sums[c.v]=0);
+  let totalDone=0, totalPlanned=0;
+  const shiftCounts={};
+  Object.keys(shiftLabels).forEach(k=> shiftCounts[k]=0);
+  dates.forEach(date=>{
+    const wk=weekKeyOf(date), idx=weekIdxOf(date);
+    const dayObj = monthWeeksData[wk] ? monthWeeksData[wk][idx] : null;
+    if(!dayObj) return;
+    if(dayObj.type && shiftCounts.hasOwnProperty(dayObj.type)) shiftCounts[dayObj.type]++;
+    dayObj.rows.forEach(r=>{
+      const m=durationMinutes(r.start,r.end);
+      totalPlanned+=m;
+      if(r.done){ sums[r.category]=(sums[r.category]||0)+m; totalDone+=m; }
+    });
+  });
+  return {sums, totalDone, totalPlanned, shiftCounts};
+}
+function renderMonthAnalysis(dates){
+  const rangeEl=document.getElementById('monthReportRange');
+  if(rangeEl) rangeEl.textContent = '— '+jMonths[monthViewJM-1]+' '+toFa(monthViewJY);
+  const {sums, totalDone, shiftCounts} = computeMonthAnalysis(dates);
+  renderBarChartInto('monthChartWrap', sums);
+  const scWrap=document.getElementById('monthShiftCounts');
+  if(scWrap){
+    scWrap.innerHTML='';
+    Object.keys(shiftLabels).forEach(k=>{
+      const pill=document.createElement('span');
+      pill.className='sc';
+      pill.innerHTML = '<span class="dot" style="background:var(--'+k+')"></span>'+shiftShort[k]+' ('+shiftCode[k]+'): <b>'+toFa(shiftCounts[k]||0)+'</b>';
+      scWrap.appendChild(pill);
+    });
+  }
+  const interpEl=document.getElementById('monthReportInterpret');
+  if(interpEl) interpEl.textContent = buildInterpretation(sums, totalDone);
+  renderCategoryReport();
+}
+
+/* ---------- extra / out-of-routine tasks (shown as "سایر" in reports, warned next to the date) ---------- */
+function buildExtraTasksSection(dayObj, onChange){
+  const wrap=document.createElement('div');
+  wrap.className='extratasks';
+  if(dayObj.extraTasks.length){
+    const list=document.createElement('div');
+    list.className='extratasks-list';
+    dayObj.extraTasks.forEach((task,i)=>{
+      const row=document.createElement('div');
+      row.className='extratask-row'+(task.done?' done':'');
+      const chk=document.createElement('input'); chk.type='checkbox'; chk.checked=task.done;
+      chk.onchange=()=>{ task.done=chk.checked; row.className='extratask-row'+(task.done?' done':''); onChange(false); };
+      const txt=document.createElement('input'); txt.type='text'; txt.value=task.text; txt.placeholder='کار خارج از برنامهٔ این روز...';
+      txt.oninput=()=>{ task.text=txt.value; onChange(false); };
+      const del=document.createElement('button'); del.className='del'; del.title='حذف'; del.textContent='🗑';
+      del.onclick=()=>{ dayObj.extraTasks.splice(i,1); onChange(true); };
+      row.appendChild(chk); row.appendChild(txt); row.appendChild(del);
+      list.appendChild(row);
+    });
+    wrap.appendChild(list);
+  }
+  const addBtn=document.createElement('button');
+  addBtn.className='extratask-add';
+  addBtn.textContent='+ افزودن کار خارج از برنامه (سایر)';
+  addBtn.onclick=()=>{ dayObj.extraTasks.push({id:'e'+(rowSeq++), text:'', done:false}); onChange(true); };
+  wrap.appendChild(addBtn);
+  return wrap;
+}
+
+/* ---------- monthly view ---------- */
+function jalaliMonthLength(jy,jm){
+  if(jm===12) return j2d(jy+1,1,1) - j2d(jy,12,1);
+  return j2d(jy,jm+1,1) - j2d(jy,jm,1);
+}
+function ensureMonthCursor(){
+  if(monthViewJY==null){
+    const t=new Date();
+    const [jy,jm]=gregorianToJalali(t.getFullYear(), t.getMonth()+1, t.getDate());
+    monthViewJY=jy; monthViewJM=jm;
+  }
+}
+async function shiftMonth(dir){
+  closeShiftPicker();
+  ensureMonthCursor();
+  await flushMonthSaves();
+  monthViewJM += dir;
+  if(monthViewJM<1){ monthViewJM=12; monthViewJY--; }
+  else if(monthViewJM>12){ monthViewJM=1; monthViewJY++; }
+  renderMonthView();
+}
+function monthDateList(jy,jm){
+  const len=jalaliMonthLength(jy,jm);
+  const list=[];
+  for(let d=1; d<=len; d++){
+    const jdn=j2d(jy,jm,d);
+    const [gy,gm,gd]=d2g(jdn);
+    list.push(new Date(gy,gm-1,gd));
+  }
+  return list;
+}
+function weekKeyOf(date){ return toISO(saturdayOnOrBefore(date)); }
+function weekIdxOf(date){ return (date.getDay()+1)%7; }
+
+async function renderMonthView(){
+  ensureMonthCursor();
+  const token = ++monthRenderToken;
+  const container=document.getElementById('days');
+  container.innerHTML='<div class="month-loading">در حال بارگذاری ماه...</div>';
+  document.getElementById('monthNavLabel').textContent = jMonths[monthViewJM-1]+' '+toFa(monthViewJY);
+  setMonthSaveStatus('—');
+
+  const dates = monthDateList(monthViewJY, monthViewJM);
+  const neededKeys = [...new Set(dates.map(weekKeyOf))];
+  /* build into a local object first, then swap it in — so a slow read from a month the
+     user already navigated away from can't land in the wrong month's data */
+  const loaded = {};
+  for(const k of neededKeys){
+    loaded[k] = await readWeekDays(fromISO(k));
+  }
+  // a newer load (or a view change) started while we were reading — drop this result
+  if(token!==monthRenderToken || viewMode!=='month') return;
+  monthWeeksData = loaded;
+
+  // keep the selected day if it's still inside this month, otherwise default to today (or day 1)
+  if(!selectedMonthDate || !dates.some(d=>toISO(d)===toISO(selectedMonthDate))){
+    const todayISO = toISO(new Date());
+    selectedMonthDate = dates.find(d=>toISO(d)===todayISO) || dates[0];
+  }
+  rerenderMonthUI(dates);
+}
+
+/* rebuild the grid + detail panel from data already held in memory (no re-fetch) */
+function rerenderMonthUI(datesArg){
+  const dates = datesArg || monthDateList(monthViewJY, monthViewJM);
+  const container=document.getElementById('days');
+  container.innerHTML='';
+  container.appendChild(buildMonthGrid(dates));
+  container.appendChild(buildMonthDetailPanel(selectedMonthDate));
+  renderMonthAnalysis(dates);
+}
+
+/* calendar-sheet style grid: header row of weekday names, then a 7-column grid of day cells */
+function buildMonthGrid(dates){
+  const wrap=document.createElement('div');
+  wrap.className='monthgrid-wrap';
+
+  const dow=document.createElement('div');
+  dow.className='monthgrid-dow';
+  dayNames.forEach((n,i)=>{
+    const s=document.createElement('span');
+    s.textContent = n[0];
+    if(i===6) s.classList.add('fri');
+    dow.appendChild(s);
+  });
+  wrap.appendChild(dow);
+
+  const grid=document.createElement('div');
+  grid.className='monthgrid';
+
+  const leadEmpty = weekIdxOf(dates[0]);
+  for(let i=0;i<leadEmpty;i++){
+    const e=document.createElement('div'); e.className='monthcell empty'; grid.appendChild(e);
+  }
+
+  const todayISO = toISO(new Date());
+  const selISO = selectedMonthDate ? toISO(selectedMonthDate) : null;
+
+  dates.forEach((date, i)=>{
+    const jday = i+1;
+    const wk = weekKeyOf(date), idx = weekIdxOf(date);
+    const dayObj = monthWeeksData[wk][idx];
+
+    const cell=document.createElement('div');
+    let cls='monthcell';
+    if(idx===6) cls+=' fri';
+    if(toISO(date)===todayISO) cls+=' today';
+    if(selISO && toISO(date)===selISO) cls+=' selected';
+    cell.className=cls;
+    cell.dataset.type = dayObj.type || '';
+
+    const jd=document.createElement('div'); jd.className='jd'; jd.textContent=toFa(jday);
+    const code=shiftCodeOf(dayObj.type);
+    const gd=document.createElement('div');
+    gd.className='gd shiftcode-'+(dayObj.type||'none')+(code.length>2?' long':'');
+    gd.textContent=code;
+    cell.appendChild(jd); cell.appendChild(gd);
+
+    const dots=document.createElement('div'); dots.className='dots';
+    if(dayObj.extraTasks.some(t=>!t.done)){ const i2=document.createElement('i'); i2.className='extra'; dots.appendChild(i2); }
+    if(eventsOnGregorianDate(date).length){ const i3=document.createElement('i'); i3.className='ev'; dots.appendChild(i3); }
+    if(dots.children.length) cell.appendChild(dots);
+
+    cell.onclick=()=>{
+      // update selection highlight without a full grid rebuild, so the popover below stays anchored correctly
+      grid.querySelectorAll('.monthcell.selected').forEach(el=>el.classList.remove('selected'));
+      cell.classList.add('selected');
+      selectedMonthDate = date;
+
+      // refresh just the detail panel (extra tasks / event chips) for the newly selected day
+      const container=document.getElementById('days');
+      const oldPanel = container.querySelector('.monthdetail');
+      const newPanel = buildMonthDetailPanel(date);
+      if(oldPanel) oldPanel.replaceWith(newPanel); else container.appendChild(newPanel);
+
+      // open the shift picker right at the clicked cell
+      openShiftPicker(cell, date, dayObj, wk);
+    };
+    grid.appendChild(cell);
+  });
+
+  wrap.appendChild(grid);
+
+  const legend=document.createElement('div');
+  legend.className='legend';
+  legend.style.marginTop='12px';
+  legend.style.marginBottom='0';
+  legend.innerHTML = `
+    <span><span class="dot" style="background:var(--morning)"></span>صبح</span>
+    <span><span class="dot" style="background:var(--evening)"></span>عصر</span>
+    <span><span class="dot" style="background:var(--night)"></span>شب</span>
+    <span><span class="dot" style="background:var(--me)"></span>صبح+عصر</span>
+    <span><span class="dot" style="background:var(--mn)"></span>صبح+شب</span>
+    <span><span class="dot" style="background:var(--off)"></span>آف بعد شب</span>
+    <span><span class="dot" style="background:var(--morakhasi)"></span>مرخصی</span>
+    <span><span class="dot" style="background:var(--danger)"></span>کار خارج از برنامه</span>
+    <span><span class="dot" style="background:var(--event)"></span>مناسبت</span>
+  `;
+  wrap.appendChild(legend);
+
+  return wrap;
+}
+
+/* detail panel below the grid — shows the selected day, lets you assign a shift, add extra tasks, and add an occasion */
+function buildMonthDetailPanel(date){
+  const wk = weekKeyOf(date);
+  const idx = weekIdxOf(date);
+  const dayObj = monthWeeksData[wk][idx];
+
+  const panel=document.createElement('div');
+  panel.className='monthdetail';
+  panel.dataset.type = dayObj.type || '';
+
+  const head=document.createElement('div');
+  head.className='monthdetail-head';
+  head.innerHTML = `
+    <div class="day-title">
+      <span class="monthdetail-title">${dayNames[idx]}<span class="g">${jalaliLabel(date.getFullYear(),date.getMonth()+1,date.getDate())} — ${toISO(date)}</span></span>
+      ${eventChipsHtml(date)}
+    </div>
+  `;
+  const sel=document.createElement('select');
+  sel.className='shiftsel';
+  const optNone=document.createElement('option'); optNone.value=''; optNone.textContent='— انتخاب شیفت —';
+  if(!dayObj.type) optNone.selected=true;
+  sel.appendChild(optNone);
+  Object.keys(shiftLabels).forEach(k=>{
+    const o=document.createElement('option'); o.value=k; o.textContent=shiftLabels[k];
+    if(dayObj.type===k) o.selected=true;
+    sel.appendChild(o);
+  });
+  sel.onchange=()=>{
+    if(!sel.value){ dayObj.type=null; dayObj.rows=[]; }
+    else {
+      dayObj.type=sel.value;
+      dayObj.rows = templates[sel.value].map(r=>({id:'r'+(rowSeq++), start:r.start,end:r.end,activity:r.activity,category:r.category,note:r.note||'',done:false}));
+    }
+    saveMonthWeek(wk);
+    rerenderMonthUI();
+  };
+  head.appendChild(sel);
+  panel.appendChild(head);
+
+  const extraSection = buildExtraTasksSection(dayObj, (structural)=>{
+    if(structural){ saveMonthWeek(wk); rerenderMonthUI(); }
+    else { debounceSaveMonthWeek(wk); }
+  });
+  panel.appendChild(extraSection);
+
+  const evBtn=document.createElement('button');
+  evBtn.className='tmplbtn monthdetail-evbtn';
+  evBtn.textContent='🎉 افزودن مناسبت برای این روز';
+  evBtn.onclick=()=>{
+    const [jy,jm,jd]=gregorianToJalali(date.getFullYear(),date.getMonth()+1,date.getDate());
+    addEventRow({ type:'yearly', month:jm, day:jd });
+    openEventsModal();
+  };
+  panel.appendChild(evBtn);
+
+  return panel;
+}
+
+async function saveMonthWeek(weekKeyISO, dataOverride){
+  const data = dataOverride || monthWeeksData[weekKeyISO];
+  if(!data) return;
+  const ok = await writeWeekDays(weekKeyISO, data);
+  setMonthSaveStatus(ok ? '✓ ذخیره شد' : '⚠ ذخیره نشد');
+}
+function debounceSaveMonthWeek(weekKeyISO){
+  setMonthSaveStatus('در حال ذخیره...');
+  if(monthSaveTimers[weekKeyISO]) clearTimeout(monthSaveTimers[weekKeyISO]);
+  /* capture the data reference right now — if the user switches to a different
+     month before this timer fires, monthWeeksData gets replaced wholesale, but
+     this closure still points at the exact (edited) array, so the save is never lost */
+  const dataRef = monthWeeksData[weekKeyISO];
+  monthSaveTimers[weekKeyISO] = setTimeout(()=>{
+    delete monthSaveTimers[weekKeyISO];
+    saveMonthWeek(weekKeyISO, dataRef);
+  }, 600);
+}
+function setMonthSaveStatus(text){
+  const el=document.getElementById('monthSaveStatus');
+  if(el) el.textContent = text;
+}
+/* immediately persist any weeks with a pending debounced save — used before leaving month view
+   or switching to a different month, so no edit is ever silently dropped */
+async function flushMonthSaves(){
+  const keys = Object.keys(monthSaveTimers);
+  for(const k of keys){
+    clearTimeout(monthSaveTimers[k]);
+    delete monthSaveTimers[k];
+    await saveMonthWeek(k, monthWeeksData[k]);
+  }
+}
+/* explicit "save this month" button — immediately persists every week touched by the visible month, skipping any pending debounce */
+async function saveWholeMonth(){
+  const keys = Object.keys(monthWeeksData);
+  if(!keys.length) return;
+  setMonthSaveStatus('در حال ذخیره...');
+  let bad=0;
+  for(const k of keys){
+    if(monthSaveTimers[k]){ clearTimeout(monthSaveTimers[k]); delete monthSaveTimers[k]; }
+    const ok = await writeWeekDays(k, monthWeeksData[k]);
+    if(!ok) bad++;
+  }
+  setMonthSaveStatus(bad ? '⚠ ذخیره نشد' : '✓ کل ماه ذخیره شد');
+}
+/* explicit "save occasions" button in the events modal — bypasses the debounce and saves immediately */
+async function saveEventsNow(){
+  if(eventsSaveTimer){ clearTimeout(eventsSaveTimer); eventsSaveTimer=null; }
+  setEventsStatus('در حال ذخیره...');
+  try{
+    const res = await window.storage.set('events', JSON.stringify(events), false);
+    setEventsStatus(res ? '✓ ذخیره شد' : '⚠ ذخیره نشد');
+  }catch(e){ setEventsStatus('⚠ ذخیره نشد'); }
+}
+
+/* ---------- backup export / import ---------- */
+function isIOSDevice(){
+  return /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+/* iOS Safari (and in-app browsers) frequently ignore the `download` attribute on blob links,
+   so there we open the file in a new tab instead — the user can then use the Share button
+   ("Save to Files") to store it. Everywhere else we use a normal programmatic download. */
+function triggerDownload(filename, content, mime){
+  try{
+    const blob = new Blob([content], {type: mime});
+    const url = URL.createObjectURL(blob);
+    if(isIOSDevice()){
+      /* iOS often ignores the download attribute; open in a tab so the share sheet can save it.
+         if the tab is blocked we return false and the caller shows the text fallback instead —
+         never navigate away, that would drop the user out of the app. */
+      const win = window.open(url, '_blank');
+      if(!win) return false;
+    } else {
+      const a=document.createElement('a');
+      a.href=url; a.download=filename;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    setTimeout(()=>URL.revokeObjectURL(url), 30000);
+    return true;
+  }catch(e){
+    console.error('download failed', e);
+    return false;
+  }
+}
+async function exportBackup(){
+  let payload=null;
+  try{
+    const data={};
+    try{
+      const listRes = await window.storage.list('', false);
+      const keys = (listRes && listRes.keys) || [];
+      for(const k of keys){
+        try{ const res = await window.storage.get(k, false); if(res) data[k]=res.value; }catch(e){}
+      }
+    }catch(e){ console.error('backup list failed', e); }
+    payload={ app:'saman-weekly-plan', exportedAt:new Date().toISOString(), data };
+    const text = JSON.stringify(payload,null,2);
+    const ok = triggerDownload('saman-plan-backup-'+toISO(new Date())+'.json', text, 'application/json');
+    if(!ok){ showTextFallback(text); }
+    else if(isIOSDevice()) alert('فایل پشتیبان توی یه تب جدید باز شد — از دکمه اشتراک‌گذاری بالای صفحه، «ذخیره در فایل‌ها» رو بزن تا نگه داشته بشه. اگه تب باز نشد، دوباره بزن تا متنش رو همین‌جا نشونت بدم.');
+  }catch(e){
+    console.error('exportBackup failed', e);
+    try{ showTextFallback(JSON.stringify(payload||{},null,2)); }
+    catch(e2){ alert('گرفتن خروجی پشتیبان با خطا مواجه شد. دوباره امتحان کن.'); }
+  }
+}
+function triggerImportBackup(){ document.getElementById('backupFileInput').click(); }
+async function importBackupFile(fileInput){
+  const file = fileInput.files && fileInput.files[0];
+  if(!file) return;
+  let payload;
+  try{ payload = JSON.parse(await file.text()); }
+  catch(e){ alert('فایل پشتیبان معتبر نیست.'); fileInput.value=''; return; }
+  const data = (payload && typeof payload==='object' && payload.data) ? payload.data : payload;
+  if(!data || typeof data!=='object'){ alert('فایل پشتیبان معتبر نیست.'); fileInput.value=''; return; }
+  if(!confirm('این کار اطلاعات فعلی رو با اطلاعات این فایل پشتیبان جایگزین می‌کنه. ادامه بدم؟')){ fileInput.value=''; return; }
+  let ok=0, fail=0;
+  try{
+    for(const k of Object.keys(data)){
+      try{ const res = await window.storage.set(k, data[k], false); if(res) ok++; else fail++; }
+      catch(e){ fail++; }
+    }
+  }catch(e){
+    console.error('importBackupFile failed', e);
+    alert('بازیابی فایل پشتیبان با خطا مواجه شد.');
+    fileInput.value='';
+    return;
+  }
+  fileInput.value='';
+  alert('بازیابی انجام شد: '+ok+' مورد بازیابی شد'+(fail?('، '+fail+' مورد ناموفق'):'')+'.');
+  Object.keys(weekCache).forEach(k=>delete weekCache[k]);
+  await loadTemplates(); await loadEvents();
+  if(viewMode==='month'){ monthWeeksData={}; renderMonthView(); } else { loadWeek(); }
+}
+
+/* ---------- PDF export: a real preview, plus a separate layout per view ----------
+   iOS Safari refuses window.print() when it isn't fired straight from a tap, so instead of
+   printing behind the user's back we show exactly what will be printed and let them tap. */
+function catTotalsTableHtml(sums, title){
+  const rows = categories.map(c=>'<tr><td class="right">'+escapeHtml(c.l)+'</td><td>'+durationLabel(sums[c.v]||0)+'</td></tr>').join('');
+  return (title?'<div class="prsec">'+title+'</div>':'')+
+    '<table class="prtable"><thead><tr><th>دسته‌بندی</th><th>مدت زمان</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function eventNamesOf(date){
+  return eventsOnGregorianDate(date).map(e=>e.title).filter(Boolean);
+}
+
+/* ===== daily: the full hour-by-hour sheet for one day ===== */
+function buildPrintDay(){
+  const d = weekData.days[dayViewIndex];
+  const date = addDays(weekStart, dayViewIndex);
+  const rows = (d.rows||[]).map(r=>{
+    const cat = catOf(r.category);
+    const act = escapeHtml(r.activity) + (r.note ? ' <span style="color:#555">('+escapeHtml(r.note)+')</span>' : '');
+    return '<tr><td>'+toFa(r.start)+' – '+toFa(r.end)+'</td><td class="right">'+act+'</td><td>'+(cat?cat.l:catLabel(r.category))+'</td><td>'+durationLabel(durationMinutes(r.start,r.end))+'</td><td>'+(r.done?'✓':'☐')+'</td></tr>';
+  }).join('');
+  const extras = (d.extraTasks||[]).filter(t=>t.text);
+  const extraHtml = extras.length
+    ? '<div class="prsec">کارهای خارج از برنامه</div><table class="prtable"><tbody>'+
+      extras.map(t=>'<tr><td style="width:34px">'+(t.done?'✓':'☐')+'</td><td class="right">'+escapeHtml(t.text)+'</td></tr>').join('')+
+      '</tbody></table>'
+    : '';
+  const evs = eventNamesOf(date);
+  const {sums, totalDone, totalPlanned} = computeCategorySums(d.rows||[]);
+  const interpret = buildInterpretation(sums, totalDone);
+  return '<h1>برنامه روزانه</h1>'+
+    '<div class="prsub">'+dayNames[dayViewIndex]+' — '+jalaliLabel(date.getFullYear(),date.getMonth()+1,date.getDate())+
+      ' — شیفت: '+(d.type?shiftShort[d.type]+' ('+shiftCode[d.type]+')':'—')+
+      ' — انجام‌شده '+durationLabel(totalDone)+' از '+durationLabel(totalPlanned)+
+      (evs.length?' — مناسبت: '+escapeHtml(evs.join('، ')):'')+'</div>'+
+    '<table class="prtable"><colgroup><col style="width:20%"><col><col style="width:17%"><col style="width:12%"><col style="width:9%"></colgroup>'+
+      '<thead><tr><th>ساعت</th><th>فعالیت</th><th>دسته‌بندی</th><th>مدت</th><th>انجام</th></tr></thead>'+
+      '<tbody>'+(rows||'<tr><td colspan="5">برای این روز ردیفی ثبت نشده</td></tr>')+'</tbody></table>'+
+    extraHtml+
+    '<div class="prcols"><div>'+catTotalsTableHtml(sums,'جمع دسته‌بندی‌ها')+'</div>'+
+    '<div><div class="prsec">تحلیل</div><div class="printerp">'+escapeHtml(interpret)+'</div></div></div>';
+}
+
+/* ===== weekly: a planner sheet — one column per day, activities inside ===== */
+function buildPrintWeek(){
+  const end=addDays(weekStart,6);
+  const jStart=jalaliLabel(weekStart.getFullYear(),weekStart.getMonth()+1,weekStart.getDate());
+  const jEnd=jalaliLabel(end.getFullYear(),end.getMonth()+1,end.getDate());
+  let heads='', cells='', summary='', allRows=[];
+  weekData.days.forEach((d,idx)=>{
+    const date=addDays(weekStart,idx);
+    const [jy,jm,jd]=gregorianToJalali(date.getFullYear(),date.getMonth()+1,date.getDate());
+    heads += '<th>'+dayNames[idx]+'<span class="dt">'+toFa(jd)+' '+jMonths[jm-1]+' — '+(d.type?shiftShort[d.type]+' ('+shiftCode[d.type]+')':'بدون شیفت')+'</span></th>';
+    const items = (d.rows||[]).map(r=>
+      '<li><b>'+toFa(r.start)+'–'+toFa(r.end)+(r.done?' ✓':'')+'</b>'+escapeHtml(r.activity)+'</li>'
+    ).join('');
+    const extras = (d.extraTasks||[]).filter(t=>t.text)
+      .map(t=>'<li><b>سایر'+(t.done?' ✓':'')+'</b>'+escapeHtml(t.text)+'</li>').join('');
+    cells += '<td><ul>'+(items+extras || '<li style="color:#777">—</li>')+'</ul></td>';
+    const {totalDone,totalPlanned}=computeCategorySums(d.rows);
+    summary += '<tr><td>'+dayNames[idx]+'</td><td>'+jalaliLabel(date.getFullYear(),date.getMonth()+1,date.getDate())+'</td><td>'+(d.type?shiftShort[d.type]:'—')+'</td><td>'+durationLabel(totalDone)+' / '+durationLabel(totalPlanned)+'</td></tr>';
+    allRows = allRows.concat(d.rows);
+  });
+  const {sums, totalDone} = computeCategorySums(allRows);
+  const interpret = buildInterpretation(sums, totalDone);
+  return '<h1>برنامه هفتگی</h1>'+
+    '<div class="prsub">از '+jStart+' تا '+jEnd+'</div>'+
+    '<table class="prweek"><thead><tr>'+heads+'</tr></thead><tbody><tr>'+cells+'</tr></tbody></table>'+
+    '<div class="prcols">'+
+      '<div><div class="prsec">جمع هر روز (انجام‌شده / برنامه‌ریزی‌شده)</div>'+
+        '<table class="prtable"><thead><tr><th>روز</th><th>تاریخ</th><th>شیفت</th><th>انجام / برنامه</th></tr></thead><tbody>'+summary+'</tbody></table></div>'+
+      '<div>'+catTotalsTableHtml(sums,'جمع دسته‌بندی‌ها')+'</div>'+
+    '</div>'+
+    '<div class="printerp">'+escapeHtml(interpret)+'</div>';
+}
+
+/* ===== monthly: nothing but a plain black & white calendar sheet ===== */
+function buildPrintMonth(){
+  ensureMonthCursor();
+  const dates = monthDateList(monthViewJY, monthViewJM);
+  const leadEmpty = weekIdxOf(dates[0]);
+  const heads = dayNames.map(n=>'<th>'+n+'</th>').join('');
+  let cells='', col=0, body='<tr>';
+  for(let i=0;i<leadEmpty;i++){ body += '<td class="empty"></td>'; col++; }
+  dates.forEach((date,i)=>{
+    if(col===7){ body += '</tr><tr>'; col=0; }
+    const wk=weekKeyOf(date), idx=weekIdxOf(date);
+    const dayObj = monthWeeksData[wk] ? monthWeeksData[wk][idx] : null;
+    const code = dayObj && dayObj.type ? shiftCode[dayObj.type] : '';
+    const evs = eventNamesOf(date);
+    body += '<td><div class="d">'+toFa(i+1)+'</div><div class="s">'+(code||'·')+'</div>'+
+            (evs.length?'<div class="n">'+escapeHtml(evs.join('، '))+'</div>':'')+'</td>';
+    col++;
+  });
+  while(col<7 && col>0){ body += '<td class="empty"></td>'; col++; }
+  body += '</tr>';
+  return '<h1>'+jMonths[monthViewJM-1]+' '+toFa(monthViewJY)+'</h1>'+
+    '<div class="prsub">'+Object.keys(shiftLabels).map(k=>shiftCode[k]+' '+shiftShort[k]).join(' · ')+'</div>'+
+    '<table class="prcal"><thead><tr>'+heads+'</tr></thead><tbody>'+body+'</tbody></table>';
+}
+
+/* the weekly planner needs the wide side of the page; the other two don't */
+function setPrintPageStyle(orientation){
+  let st=document.getElementById('printPageStyle');
+  if(!st){ st=document.createElement('style'); st.id='printPageStyle'; document.head.appendChild(st); }
+  st.textContent='@media print{ @page{ size:A4 '+orientation+'; margin:10mm; } }';
+}
+function preparePrintAndOpen(){
+  const area=document.getElementById('printArea');
+  const overlay=document.getElementById('printOverlay');
+  if(!area||!overlay) return;
+  closeShiftPicker();
+  try{
+    if(viewMode==='day'){ area.innerHTML = buildPrintDay(); setPrintPageStyle('portrait'); }
+    else if(viewMode==='month'){ area.innerHTML = buildPrintMonth(); setPrintPageStyle('portrait'); }
+    else { area.innerHTML = buildPrintWeek(); setPrintPageStyle('landscape'); }
+  }catch(e){
+    console.error('print build failed', e);
+    alert('ساخت خروجی چاپ با خطا مواجه شد.');
+    return;
+  }
+  overlay.classList.remove('hidden');
+  overlay.scrollTop=0;
+}
+function closePrintPreview(){
+  const overlay=document.getElementById('printOverlay');
+  if(overlay) overlay.classList.add('hidden');
+}
+function doPrintNow(){
+  /* called straight from the tap, which is what iOS requires */
+  try{ window.print(); }
+  catch(e){
+    console.error('print failed', e);
+    alert('مرورگر اجازهٔ چاپ مستقیم نداد. از دکمهٔ اشتراک‌گذاری مرورگر → «چاپ» استفاده کن؛ همین صفحه چاپ می‌شه.');
+  }
+}
+function copyFallbackText(){
+  const ta=document.getElementById('fallbackText');
+  if(!ta) return;
+  ta.focus(); ta.setSelectionRange(0, ta.value.length);
+  let ok=false;
+  try{ ok=document.execCommand('copy'); }catch(e){}
+  if(!ok && navigator.clipboard){ navigator.clipboard.writeText(ta.value).then(()=>alert('کپی شد.'),()=>{}); return; }
+  alert(ok?'کپی شد.':'کپی نشد — دستی انتخاب و کپی کن.');
+}
+function showTextFallback(text){
+  const ov=document.getElementById('textFallback'), ta=document.getElementById('fallbackText');
+  if(!ov||!ta) return false;
+  ta.value=text;
+  ov.classList.remove('hidden');
+  return true;
+}
+
+
+/* ---------- category editor ---------- */
+let catWorking = null;
+
+function openCatModal(){
+  catWorking = JSON.parse(JSON.stringify(categories));
+  renderCatModal();
+  document.getElementById('catStatus').textContent='';
+  document.getElementById('catModal').classList.remove('hidden');
+}
+function closeCatModal(){
+  document.getElementById('catModal').classList.add('hidden');
+  catWorking = null;
+}
+function renderCatModal(){
+  const wrap=document.getElementById('catList');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  catWorking.forEach((c,i)=> wrap.appendChild(buildCatRow(c,i)));
+}
+function buildCatRow(cat, idx){
+  const row=document.createElement('div');
+  row.className='catrow';
+
+  const color=document.createElement('input');
+  color.type='color'; color.value=cat.c;
+  color.oninput=()=>{ cat.c=color.value; };
+  row.appendChild(color);
+
+  const name=document.createElement('input');
+  name.type='text'; name.value=cat.l; name.placeholder='اسم دسته‌بندی';
+  name.oninput=()=>{ cat.l=name.value; };
+  row.appendChild(name);
+
+  const rLab=document.createElement('label');
+  const rChk=document.createElement('input'); rChk.type='checkbox'; rChk.checked=cat.routine!==false;
+  rChk.onchange=()=>{ cat.routine=rChk.checked; };
+  rLab.appendChild(rChk); rLab.appendChild(document.createTextNode('روتین'));
+  row.appendChild(rLab);
+
+  const nLab=document.createElement('label');
+  const nChk=document.createElement('input'); nChk.type='checkbox'; nChk.checked=!!cat.note;
+  nChk.onchange=()=>{ cat.note=nChk.checked; };
+  nLab.appendChild(nChk); nLab.appendChild(document.createTextNode('توضیح'));
+  row.appendChild(nLab);
+
+  const actions=document.createElement('div');
+  actions.className='actiongroup';
+  const up=document.createElement('button'); up.textContent='↑'; up.title='بالا';
+  up.onclick=()=>{ if(idx>0){ catWorking.splice(idx,1); catWorking.splice(idx-1,0,cat); renderCatModal(); } };
+  const down=document.createElement('button'); down.textContent='↓'; down.title='پایین';
+  down.onclick=()=>{ if(idx<catWorking.length-1){ catWorking.splice(idx,1); catWorking.splice(idx+1,0,cat); renderCatModal(); } };
+  const del=document.createElement('button'); del.textContent='🗑'; del.className='del'; del.title='حذف';
+  del.onclick=()=>{
+    if(catWorking.length<=1){ alert('حداقل یک دسته‌بندی باید بمونه.'); return; }
+    if(!confirm('«'+cat.l+'» حذف بشه؟ فعالیت‌هایی که قبلاً با این دسته ثبت شدن، در گزارش‌ها به‌عنوان «دستهٔ حذف‌شده» نشون داده می‌شن.')) return;
+    catWorking.splice(idx,1); renderCatModal();
+  };
+  actions.appendChild(up); actions.appendChild(down); actions.appendChild(del);
+  row.appendChild(actions);
+
+  return row;
+}
+function addCatRow(){
+  catWorking.push({v:newCatId(), l:'دسته‌بندی جدید', c:'#7dd3c0', routine:true, note:false});
+  renderCatModal();
+  const wrap=document.getElementById('catList');
+  const last=wrap && wrap.lastChild && wrap.lastChild.querySelector('input[type=text]');
+  if(last){ last.focus(); last.select(); }
+}
+function resetCatDefaults(){
+  if(!confirm('دسته‌بندی‌ها به حالت اولیه برگردن؟')) return;
+  catWorking = JSON.parse(JSON.stringify(defaultCategories));
+  renderCatModal();
+}
+async function saveCatWorking(){
+  const st=document.getElementById('catStatus');
+  st.textContent='در حال ذخیره...';
+  const ok = await persistCategories(catWorking);
+  st.textContent = ok ? '✓ ذخیره شد' : '⚠ ذخیره نشد';
+  if(ok){
+    catWorking = JSON.parse(JSON.stringify(categories));
+    renderCatModal();
+    renderAll();
+    setTimeout(closeCatModal, 500);
+  }
+}
+
+/* ---------- single-category time report ---------- */
+let catReportSel = null;
+
+function setCatReport(v){ catReportSel = v; renderCategoryReport(); }
+
+/* the days currently in view: the whole jalali month in month view, otherwise this week */
+function scopeDayList(){
+  if(viewMode==='month'){
+    ensureMonthCursor();
+    const dates = monthDateList(monthViewJY, monthViewJM);
+    return {
+      scope:'month',
+      label: jMonths[monthViewJM-1]+' '+toFa(monthViewJY),
+      items: dates.map(d=>{
+        const wk=weekKeyOf(d), i=weekIdxOf(d);
+        const o = monthWeeksData[wk] ? monthWeeksData[wk][i] : null;
+        return { date:d, idx:i, dayObj: o || {type:null, rows:[], extraTasks:[]} };
+      })
+    };
+  }
+  const end=addDays(weekStart,6);
+  const items=[];
+  for(let i=0;i<7;i++){
+    items.push({ date:addDays(weekStart,i), idx:i, dayObj:(weekData && weekData.days[i]) || {type:null,rows:[],extraTasks:[]} });
+  }
+  return {
+    scope:'week',
+    label:'از '+jalaliLabel(weekStart.getFullYear(),weekStart.getMonth()+1,weekStart.getDate())+
+          ' تا '+jalaliLabel(end.getFullYear(),end.getMonth()+1,end.getDate()),
+    items
+  };
+}
+/* per-day breakdown of one category over the current scope */
+function computeCategoryBreakdown(catV){
+  const {items, label, scope} = scopeDayList();
+  let done=0, planned=0, activeDays=0;
+  const days = items.map(it=>{
+    const rows=(it.dayObj.rows||[]).filter(r=>r.category===catV);
+    let d=0,p=0;
+    rows.forEach(r=>{ const m=durationMinutes(r.start,r.end); p+=m; if(r.done) d+=m; });
+    if(p>0) activeDays++;
+    done+=d; planned+=p;
+    return { date:it.date, idx:it.idx, rows, done:d, planned:p };
+  });
+  return {days, done, planned, activeDays, label, scope};
+}
+
+function renderCategoryReport(){
+  const box=document.getElementById('catReportBox');
+  if(!box) return;
+  if(!categories.length){ box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+
+  if(!catOf(catReportSel)) catReportSel = (catOf('mali') ? 'mali' : categories[0].v);
+
+  const sel=document.getElementById('catReportSelect');
+  sel.innerHTML='';
+  categories.forEach(c=>{
+    const o=document.createElement('option'); o.value=c.v; o.textContent=c.l;
+    if(c.v===catReportSel) o.selected=true;
+    sel.appendChild(o);
+  });
+
+  const cat=catOf(catReportSel);
+  const {days, done, planned, activeDays, label, scope} = computeCategoryBreakdown(catReportSel);
+  document.getElementById('catReportDesc').textContent =
+    'زمان «'+cat.l+'» به تفکیک روز — '+(scope==='month'?'ماه ':'')+label;
+
+  const body=document.getElementById('catReportBody');
+  body.innerHTML='';
+
+  if(planned===0){
+    const empty=document.createElement('div');
+    empty.className='report-empty';
+    empty.textContent='توی این بازه هیچ فعالیتی با دسته‌بندی «'+cat.l+'» ثبت نشده.';
+    body.appendChild(empty);
+    return;
+  }
+
+  const wrap=document.createElement('div'); wrap.className='creport-wrap';
+  const table=document.createElement('table'); table.className='creport';
+  table.innerHTML='<thead><tr><th style="width:22%">روز</th><th>ساعت‌ها و فعالیت‌ها</th><th style="width:22%">انجام‌شده / برنامه</th></tr></thead>';
+  const tbody=document.createElement('tbody');
+  days.forEach(d=>{
+    const [jy,jm,jd]=gregorianToJalali(d.date.getFullYear(),d.date.getMonth()+1,d.date.getDate());
+    const tr=document.createElement('tr');
+    if(d.planned===0) tr.className='zero';
+    const acts = d.rows.length
+      ? d.rows.map(r=>'<b>'+toFa(r.start)+'–'+toFa(r.end)+'</b> '+escapeHtml(r.activity)+(r.note?' ('+escapeHtml(r.note)+')':'')+(r.done?' ✓':'')).join('<br>')
+      : '—';
+    tr.innerHTML =
+      '<td class="dayname">'+dayNames[d.idx]+'<span>'+toFa(jd)+' '+jMonths[jm-1]+'</span></td>'+
+      '<td class="right acts">'+acts+'</td>'+
+      '<td class="amount">'+durationLabel(d.done)+' / '+durationLabel(d.planned)+'</td>';
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  body.appendChild(wrap);
+
+  const avg = activeDays ? Math.round(planned/activeDays) : 0;
+  const pills=document.createElement('div');
+  pills.className='shiftcounts';
+  pills.innerHTML =
+    '<span class="sc"><span class="dot" style="background:'+cat.c+'"></span>مجموع برنامه‌ریزی‌شده: <b>'+durationLabel(planned)+'</b></span>'+
+    '<span class="sc">انجام‌شده: <b>'+durationLabel(done)+'</b></span>'+
+    '<span class="sc">روزهای درگیر: <b>'+toFa(activeDays)+'</b></span>'+
+    '<span class="sc">میانگین هر روز درگیر: <b>'+durationLabel(avg)+'</b></span>';
+  body.appendChild(pills);
+}
+
+/* ---------- printable version of the single-category report ---------- */
+function buildPrintCategory(){
+  const cat=catOf(catReportSel) || categories[0];
+  const {days, done, planned, activeDays, label, scope} = computeCategoryBreakdown(cat.v);
+  const rows = days.map(d=>{
+    const [jy,jm,jd]=gregorianToJalali(d.date.getFullYear(),d.date.getMonth()+1,d.date.getDate());
+    const acts = d.rows.length
+      ? d.rows.map(r=>toFa(r.start)+'–'+toFa(r.end)+' '+escapeHtml(r.activity)+(r.note?' ('+escapeHtml(r.note)+')':'')+(r.done?' ✓':' ☐')).join('<br>')
+      : '—';
+    return '<tr><td>'+dayNames[d.idx]+'</td><td>'+toFa(jd)+' '+jMonths[jm-1]+'</td><td class="right">'+acts+'</td>'+
+           '<td>'+durationLabel(d.done)+'</td><td>'+durationLabel(d.planned)+'</td></tr>';
+  }).join('');
+  const avg = activeDays ? Math.round(planned/activeDays) : 0;
+  return '<h1>گزارش زمان «'+escapeHtml(cat.l)+'»</h1>'+
+    '<div class="prsub">'+(scope==='month'?'ماه ':'هفتهٔ ‌')+label+'</div>'+
+    '<table class="prtable"><colgroup><col style="width:13%"><col style="width:17%"><col><col style="width:13%"><col style="width:13%"></colgroup>'+
+      '<thead><tr><th>روز</th><th>تاریخ</th><th>فعالیت‌ها</th><th>انجام‌شده</th><th>برنامه‌ریزی‌شده</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+      '<tfoot><tr><th colspan="3">جمع کل</th><th>'+durationLabel(done)+'</th><th>'+durationLabel(planned)+'</th></tr></tfoot>'+
+    '</table>'+
+    '<div class="printerp">روزهای درگیر: '+toFa(activeDays)+' — میانگین هر روز درگیر: '+durationLabel(avg)+
+      ' — نسبت انجام‌شده به برنامه: '+toFa(planned?Math.round(done/planned*100):0)+'٪</div>';
+}
+function printCategoryReport(){
+  const area=document.getElementById('printArea');
+  const overlay=document.getElementById('printOverlay');
+  if(!area||!overlay) return;
+  closeShiftPicker();
+  try{
+    area.innerHTML = buildPrintCategory();
+    setPrintPageStyle('portrait');
+  }catch(e){
+    console.error('category print failed', e);
+    alert('ساخت خروجی این گزارش با خطا مواجه شد.');
+    return;
+  }
+  overlay.classList.remove('hidden');
+  overlay.scrollTop=0;
+}
+
+/* ---------- template editor ---------- */
+let tmplWorking = null;
+let tmplEditType = 'morning';
+
+function openTmplModal(){
+  closeShiftPicker();
+  tmplWorking = JSON.parse(JSON.stringify(templates));
+  tmplEditType = 'morning';
+  document.getElementById('tmplModal').classList.remove('hidden');
+  renderTmplModal();
+}
+function closeTmplModal(){
+  document.getElementById('tmplModal').classList.add('hidden');
+  tmplWorking = null;
+}
+function renderTmplModal(){
+  const tabsWrap = document.getElementById('tmplTabs');
+  tabsWrap.innerHTML = '';
+  Object.keys(shiftLabels).forEach(key=>{
+    const b=document.createElement('button');
+    b.className = 'tmpltab' + (key===tmplEditType ? ' active' : '');
+    b.textContent = shiftShort[key];
+    b.onclick = ()=>{ tmplEditType = key; renderTmplModal(); };
+    tabsWrap.appendChild(b);
+  });
+
+  const rowsWrap = document.getElementById('tmplRows');
+  rowsWrap.innerHTML = '';
+  tmplWorking[tmplEditType].forEach((row, i)=> rowsWrap.appendChild(buildTmplRowCard(row, i)));
+
+  document.getElementById('tmplStatus').textContent = '';
+}
+function buildTmplRowCard(row, idx){
+  const card = document.createElement('div');
+  card.className = 'tmplrowcard';
+
+  const timegroup = document.createElement('div');
+  timegroup.className = 'timegroup';
+  const s = makeTimeInput(row.start, null, (v)=>{ row.start = v; });
+  const dash = document.createElement('span'); dash.className='dash'; dash.textContent='–';
+  const e = makeTimeInput(row.end, null, (v)=>{ row.end = v; });
+  timegroup.appendChild(s); timegroup.appendChild(dash); timegroup.appendChild(e);
+  card.appendChild(timegroup);
+
+  const actWrap = document.createElement('div');
+  actWrap.className = 'activity-field';
+  const actInp = document.createElement('input'); actInp.type='text'; actInp.value=row.activity;
+  actInp.oninput = ()=>{ row.activity = actInp.value; };
+  actWrap.appendChild(actInp);
+  card.appendChild(actWrap);
+
+  const catSel = document.createElement('select');
+  catSel.className = 'catsel';
+  if(row.category && !catOf(row.category)){
+    const o=document.createElement('option'); o.value=row.category; o.textContent='⚠ دستهٔ حذف‌شده'; o.selected=true;
+    catSel.appendChild(o);
+  }
+  categories.forEach(c=>{
+    const o=document.createElement('option'); o.value=c.v; o.textContent=c.l;
+    if(c.v===row.category) o.selected=true;
+    catSel.appendChild(o);
+  });
+  card.appendChild(catSel);
+
+  const noteWrap = document.createElement('div');
+  noteWrap.className = 'notewrap';
+  noteWrap.style.display = catHasNote(row.category) ? 'flex' : 'none';
+  const noteInp = document.createElement('input');
+  noteInp.type = 'text';
+  noteInp.placeholder = 'توضیح تکمیلی...';
+  noteInp.value = row.note || '';
+  noteInp.oninput = ()=>{ row.note = noteInp.value; };
+  noteWrap.appendChild(noteInp);
+  card.appendChild(noteWrap);
+
+  catSel.onchange = ()=>{
+    row.category = catSel.value;
+    noteWrap.style.display = catHasNote(row.category) ? 'flex' : 'none';
+  };
+
+  const actiongroup = document.createElement('div');
+  actiongroup.className = 'actiongroup';
+  const upBtn=document.createElement('button'); upBtn.textContent='↑'; upBtn.title='بالا';
+  upBtn.onclick=()=>{ if(idx>0){ moveRowKeepingTimes(tmplWorking[tmplEditType], idx, idx-1); renderTmplModal(); } };
+  const downBtn=document.createElement('button'); downBtn.textContent='↓'; downBtn.title='پایین';
+  downBtn.onclick=()=>{ const arr=tmplWorking[tmplEditType]; if(idx<arr.length-1){ moveRowKeepingTimes(arr, idx, idx+1); renderTmplModal(); } };
+  const delBtn=document.createElement('button'); delBtn.textContent='🗑'; delBtn.className='del'; delBtn.title='حذف';
+  delBtn.onclick=()=>{ tmplWorking[tmplEditType].splice(idx,1); renderTmplModal(); };
+  actiongroup.appendChild(upBtn); actiongroup.appendChild(downBtn); actiongroup.appendChild(delBtn);
+  card.appendChild(actiongroup);
+
+  return card;
+}
+function addTmplRow(){
+  const arr = tmplWorking[tmplEditType];
+  const last = arr[arr.length-1];
+  const start = last ? last.end : '08:00';
+  arr.push({ start, end: addMinutesToTime(start,60), activity:'فعالیت جدید', category:defaultRowCategory(), note:'' });
+  renderTmplModal();
+}
+async function saveTmplWorking(){
+  templates = JSON.parse(JSON.stringify(tmplWorking));
+  const ok = await persistTemplates(templates);
+  const statusEl = document.getElementById('tmplStatus');
+  statusEl.textContent = ok ? '✓ الگو ذخیره شد' : '⚠ ذخیره نشد';
+}
+
+/* iOS can freeze or discard a tab at any moment — make sure nothing pending is lost */
+['pagehide','visibilitychange','blur'].forEach(evt=>{
+  window.addEventListener(evt, ()=>{
+    if(evt==='visibilitychange' && document.visibilityState!=='hidden') return;
+    try{ flushMonthSaves(); }catch(e){}
+  });
+});
+
+/* ---------- init ---------- */
+(async function init(){
+  await loadCategories();
+  await loadTemplates();
+  await loadEvents();
+  loadWeek();
+})();
+</script>
+</body>
+</html>
