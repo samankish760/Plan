@@ -2,8 +2,13 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>برنامه هفتگی سامان</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="برنامه سامان">
+<meta name="theme-color" content="#12181f">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -16,7 +21,7 @@
     --c-dd:#c968a3; --c-esterahat:#6b7885; --c-khab:#5b7fd4; --c-sayer:#9a9a9a;
   }
   *{box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Vazirmatn',sans-serif;margin:0;padding:20px 12px 90px;line-height:1.6;}
+  body{background:var(--bg);color:var(--text);font-family:'Vazirmatn',sans-serif;margin:0;padding:calc(20px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(90px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));line-height:1.6;}
   .wrap{max-width:900px;margin:0 auto;}
   h1{font-size:23px;font-weight:800;margin:0 0 2px;letter-spacing:-0.02em;}
   .sub{color:var(--muted);font-size:12.5px;font-family:'JetBrains Mono',monospace;}
